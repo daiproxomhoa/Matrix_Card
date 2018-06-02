@@ -45,11 +45,11 @@ export class Panel extends Sprite {
 
     static closeDialog = () => {
         TweenMax.to(Panel.panel, 0.5, {y: -500, ease: Back.easeIn});
-        setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
+        // setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
     }
 
     static showDialog = (message: string, duration?: number) => {
-        viewGame.Game.interactiveChildren = false;
+        // viewGame.Game.interactiveChildren = false;
         Panel.panel.texture = PIXI.Texture.fromImage(App.AssetDir + "Picture/IU/panel.png");
         Panel.panel.scale.set(0.7);
         Panel.panel.y = -500;
@@ -92,7 +92,7 @@ export class Panel extends Sprite {
         });
         if (duration != -1) {
             setTimeout(() => TweenMax.to(Panel.panel, 0.5, {y: -500, ease: Back.easeIn}), duration ? duration : 2000);
-            setTimeout(() => viewGame.Game.interactiveChildren = true, duration ? duration * 1000 + 500 : 2500);
+            // setTimeout(() => viewGame.Game.interactiveChildren = true, duration ? duration * 1000 + 500 : 2500);
         }
     }
 
@@ -128,7 +128,7 @@ export class Panel extends Sprite {
         Panel.panel.buttonBox.addChild(button);
         button.onClick = () => {
             TweenMax.to(Panel.panel, 0.5, {y: -500, ease: Back.easeIn});
-            setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
+            // setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
             if (action) action();
         }
         TweenMax.to(Panel.panel, 0.5, {
@@ -141,7 +141,7 @@ export class Panel extends Sprite {
     }
 
     static showConfirmDialog(msg: string, ...buttons) {
-        viewGame.Game.interactiveChildren = false;
+        // viewGame.Game.interactiveChildren = false;
         Panel.panel.texture = PIXI.Texture.fromImage(App.AssetDir + "Picture/IU/panel.png");
         Panel.panel.scale.set(0.7);
         Panel.panel.y = -500;
@@ -189,7 +189,7 @@ export class Panel extends Sprite {
             Panel.panel.buttonBox.addChild(button);
             button.onClick = () => {
                 TweenMax.to(Panel.panel, 0.5, {y: -500, ease: Back.easeIn});
-                setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
+                // setTimeout(() => viewGame.Game.interactiveChildren = true, 500);
                 buttons[i].action();
             }
             x -= 210;

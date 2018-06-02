@@ -11,13 +11,34 @@ const Manages_1 = require("./Manages");
 const util_1 = require("util");
 class Main {
     constructor() {
+        this.bobai = [];
         this.app = express();
         this.server = http.createServer(this.app);
         this.io = SocketIO(this.server);
         this.count = 0;
         this.port = process.env.PORT || 3000;
+        this.create_Card = () => {
+            this.bobai = [];
+            for (let i = 0; i < 50; i++) {
+                if (i % 4 == 1 || i % 4 == 3)
+                    this.bobai.push(i);
+            }
+            for (let i = 0; i < 25; i++) {
+                let x = Math.floor(Math.abs(Math.random() * 25));
+                let y = Math.floor(Math.abs(Math.random() * 25));
+                let a = this.bobai[x];
+                this.bobai[x] = this.bobai[y];
+                this.bobai[y] = a;
+            }
+            // socket.on("login", (data) => {
+            //     if (!isNullOrUndefined(data))
+            //     this.manages.addUser(new User(data.name,data.sex, socket));
+            // });
+        };
         this.onConnect = (socket) => {
             this.count++;
+            this.create_Card();
+            socket.emit('start', this.bobai);
             socket.on("login", (data) => {
                 if (!util_1.isNullOrUndefined(data)) {
                     this.query("SELECT * FROM `user` WHERE username ='" + data.name + "' AND password ='" + data.pass + "';", (result) => {

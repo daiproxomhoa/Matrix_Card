@@ -9,9 +9,11 @@ export class Room {
     player1accept = false;
     name: string;
     turncount:number=0;
+    bobai=[];
     key: string = "--/--";
     guest: string = "--/--";
     score =[0 ,0];
+    private countend: number;
     constructor(id, name) {
         this.id = id;
         this.name = name;
@@ -31,8 +33,8 @@ export class Room {
             this.users[0].emit("wait player");
             this.users[0].on("disconnect", () => {
                 if (this.users.length == 2&& this.turncount>2) {
-                    this.users[1].update_gold(Math.abs(20),"+");
-                    this.users[0].update_gold(Math.abs(20),"-");
+                    this.users[1].update_gold(Math.abs(20), "+");
+                    this.users[0].update_gold(Math.abs(20), "-");
                 }
                 this.onUser0Left(1)
             }, false);
@@ -68,8 +70,31 @@ export class Room {
                 this.onUser1Left(2)
 
             });
-            this.startgame();
         }
+        // this.startgame();
+        this.create_Card();
+        user.emit('start',this.bobai);
+
+    }
+
+    create_Card = () => {
+         this.bobai=[];
+        for(let i=0;i<50;i++){
+            if(i%4==1|| i%4==3)
+                this.bobai.push(i);
+        }
+        for(let i =0 ;i<25;i++){
+            let x = Math.floor(Math.abs(Math.random()*25));
+            let y = Math.floor(Math.abs(Math.random()*25));
+            let a = this.bobai[x];
+            this.bobai[x]=this.bobai[y];
+            this.bobai[y]=a;
+        }
+
+        // socket.on("login", (data) => {
+        //     if (!isNullOrUndefined(data))
+        //     this.manages.addUser(new User(data.name,data.sex, socket));
+        // });
 
     }
 
@@ -77,129 +102,123 @@ export class Room {
         this.player0accept = false;
         this.player1accept = false;
         this.users[0].setCompatior(this.users[1]);
-        this.users[1].setCompatior(this.users[0]);
-        this.users[0].emit("start game", {
-            gameturn: true,
-            oppname: this.users[0].getCompatior().getUserName,
-            avatar: this.users[0].getCompatior().avatarID,
-            sex: this.users[0].getCompatior().sex,
-            gold: this.users[0].getCompatior().gold
-        });
-        this.users[1].emit("start game", {
-            gameturn: false,
-            oppname: this.users[1].getCompatior().getUserName,
-            avatar: this.users[1].getCompatior().avatarID,
-            sex: this.users[1].getCompatior().sex,
-            gold: this.users[1].getCompatior().gold
-        });
-        this.users[0].emit("score",{x:this.score[0],y:this.score[1]});
-        this.users[1].emit("score",{x:this.score[1],y:this.score[0]});
-        for (let i = 0; i < 2; i++) {
-            this.users[i].on("move", (data: any) => {
-                if (!isNullOrUndefined(this.users[i])) {
-                    if(!isNullOrUndefined(this.users[i].getCompatior()))
-                    this.users[i].getCompatior().emit("opponent move", data);
-                }
-            });
-            this.users[i].on("change turn", (data) => {
-                this.turncount++;
-                if(data==true){
-                    this.keyturn=i;
-                }
-                if(this.turncount==2){
-                    this.changeturn(this.keyturn);
-                    this.turncount=0;
-
-                }
-                // console.log("Name : "+ this.users[this.keyturn].getUserName+"keycount : "+this.turncount);
-                // this.turncount++;
-                // if (!isNullOrUndefined(this.users[i])) {
-                //     if(!isNullOrUndefined(this.users[i].getCompatior())){
-                //     this.turnColor = !this.turnColor;
-                //     this.users[i].getCompatior().emit("turn color", {turn: this.turnColor});
-                //     this.users[i].emit("turn color", {turn: this.turnColor});
-                // }}
-
-            });
-            this.users[i].on("end game", (data: any) => {
-                if (!isNullOrUndefined(this.users[i])) {
-                    if (!isNullOrUndefined(this.users[i].getCompatior())) {
-                        this.users[i].emit("game_end", {result:data.result,src:data.src,src1:data.src1});
-                        this.users[i].getCompatior().emit("game_end", {result: 4 - data.result, src: data.src,src1:data.src1});
-                        this.score[i]+=data.src;
-                        this.score[1-i]+=data.src1;
-                        if (data.result != 3)
-                            this.users[i].emit("restart");
-                        else
-                            this.users[i].getCompatior().emit("restart");
-                        this.users[i].emit("score",{x:this.score[i],y:this.score[1-i]});
-                        this.users[i].update_gold(Math.abs(this.score[i]),"+")
-                        this.users[i].getCompatior().emit("score",{x:this.score[1-i],y:this.score[i]});
-                        this.users[i].getCompatior().update_gold(Math.abs(this.score[i]),"-")
-                        this.users[i].emit("Reset2",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
-                        this.users[i].getCompatior().emit("Reset2",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
-                        this.turncount=0;
-                    }
-                }
-            });
-
-            this.users[i].on("send message", (msg: string) => {
-                if (!isNullOrUndefined(this.users[i])) {
-                    if(!isNullOrUndefined(this.users[i].getCompatior())){
-                    this.users[i].emit("new message", {playername: this.users[i].getUserName, message: msg});
-                    this.users[i].getCompatior().emit("new message", {
-                        playername: this.users[i].getUserName,
-                        message: msg
-                    });
-                }}
-            });
-            this.users[i].on("Ready_continue", () => {
-                if (!isNullOrUndefined(this.users[i])) {
-                    if(!isNullOrUndefined(this.users[i].getCompatior())){
-                    this.users[i].getCompatior().emit("continue_game");
-
-                    if (i == 0) {
-                        this.player0accept = true;
-                    }
-                    else {
-                        this.player1accept = true;
-                    }
-                }}
-            });
-            this.users[i].on("accepted", (data: boolean) => {
-                if (!isNullOrUndefined(this.users[i])) {
-                    if(!isNullOrUndefined(this.users[i].getCompatior())){
-                    if (data == true) {
-                        if (i == 0) {
-                            this.player0accept = true;
-                        }
-                        else
-                            this.player1accept = true;
-
-                        if (this.player0accept == this.player1accept) {
-                            console.log("OK")
-                            if(this.turncount>2) {
-                                this.users[i].getCompatior().update_gold(20, "-")
-                                this.users[i].update_gold(20, "+");
-                            }
-                            this.users[i].emit("Reset",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
-                            this.users[i].getCompatior().emit("Reset",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
-                            let second  = this.users[i].getCompatior();
-                            let first= this.users[i];
-                            this.users = [];
-                            this.addUser(first);
-                            this.addUser(second);
-                            this.turncount=0;
-                        }
-                    }
-                    else {
-                        this.player0accept = false;
-                        this.player1accept = false;
-                    }
-                }}
-            });
-
-        }
+        // this.users[1].setCompatior(this.users[0]);
+        // this.users[1].emit('start',this.bobai);
+        console.log("chan vc"+this.bobai);
+        // this.users[0].emit("start game", {
+        //     gameturn: true,
+        //     oppname: this.users[0].getCompatior().getUserName,
+        //     avatar: this.users[0].getCompatior().avatarID,
+        //     sex: this.users[0].getCompatior().sex,
+        //     gold: this.users[0].getCompatior().gold
+        //
+        // });
+        // this.users[1].emit("start game", {
+        //     gameturn: false,
+        //     oppname: this.users[1].getCompatior().getUserName,
+        //     avatar: this.users[1].getCompatior().avatarID,
+        //     sex: this.users[1].getCompatior().sex,
+        //     gold: this.users[1].getCompatior().gold
+        // });
+        // this.users[0].emit("score",{x:this.score[0],y:this.score[1]});
+        // this.users[1].emit("score",{x:this.score[1],y:this.score[0]});
+        // for (let i = 0; i < 2; i++) {
+        //     this.users[i].on("move", (data: any) => {
+        //         if (!isNullOrUndefined(this.users[i])) {
+        //             if(!isNullOrUndefined(this.users[i].getCompatior()))
+        //             this.users[i].getCompatior().emit("opponent move", data);
+        //         }
+        //     });
+        //     this.users[i].on("change turn", (data) => {
+        //         this.keycount++;
+        //         if(data==true){
+        //             this.keyturn=i;
+        //         }
+        //         if(this.keycount==2){
+        //             this.changeturn(this.keyturn);
+        //             this.keycount=0;
+        //
+        //         }
+            //
+            // });
+            // this.users[i].on("end game", (data: any) => {
+            //     if (!isNullOrUndefined(this.users[i])) {
+            //         if (!isNullOrUndefined(this.users[i].getCompatior())) {
+            //             this.users[i].emit("game_end", {result:data.result,src:data.src,src1:data.src1});
+            //             this.users[i].getCompatior().emit("game_end", {result: 4 - data.result, src: data.src,src1:data.src1});
+            //             this.score[i]+=data.src;
+            //             this.score[1-i]+=data.src1;
+            //             if (data.result != 3)
+            //                 this.users[i].emit("restart");
+            //             else
+            //                 this.users[i].getCompatior().emit("restart");
+            //             this.users[i].emit("score",{x:this.score[i],y:this.score[1-i]});
+            //             this.users[i].update_gold(Math.abs(this.score[i]),"+")
+            //             this.users[i].getCompatior().emit("score",{x:this.score[1-i],y:this.score[i]});
+            //             this.users[i].getCompatior().update_gold(Math.abs(this.score[i]),"-")
+            //             this.users[i].emit("Reset2",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
+            //             this.users[i].getCompatior().emit("Reset2",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
+            //             this.turncount=0;
+            //         }
+            //     }
+            // });
+            //
+            // this.users[i].on("send message", (msg: string) => {
+            //     if (!isNullOrUndefined(this.users[i])) {
+            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
+            //         this.users[i].emit("new message", {playername: this.users[i].getUserName, message: msg});
+            //         this.users[i].getCompatior().emit("new message", {
+            //             playername: this.users[i].getUserName,
+            //             message: msg
+            //         });
+            //     }}
+            // });
+            // this.users[i].on("Ready_continue", () => {
+            //     if (!isNullOrUndefined(this.users[i])) {
+            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
+            //         this.users[i].getCompatior().emit("continue_game");
+            //
+            //         if (i == 0) {
+            //             this.player0accept = true;
+            //         }
+            //         else {
+            //             this.player1accept = true;
+            //         }
+            //     }}
+            // });
+            // this.users[i].on("accepted", (data: boolean) => {
+            //     if (!isNullOrUndefined(this.users[i])) {
+            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
+            //         if (data == true) {
+            //             if (i == 0) {
+            //                 this.player0accept = true;
+            //             }
+            //             else
+            //                 this.player1accept = true;
+            //
+            //             if (this.player0accept == this.player1accept) {
+            //                 console.log("OK")
+            //                 if(this.turncount>2) {
+            //                     this.users[i].getCompatior().update_gold(20, "-")
+            //                     this.users[i].update_gold(20, "+");
+            //                 }
+            //                 this.users[i].emit("Reset",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
+            //                 this.users[i].getCompatior().emit("Reset",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
+            //                 let second  = this.users[i].getCompatior();
+            //                 let first= this.users[i];
+            //                 this.users = [];
+            //                 this.addUser(first);
+            //                 this.addUser(second);
+            //                 this.turncount=0;
+            //             }
+            //         }
+            //         else {
+            //             this.player0accept = false;
+            //             this.player1accept = false;
+            //         }
+            //     }}
+            // });
+        // }
     }
     onUser0Left = (c: number) => {
         this.score=[0,0];

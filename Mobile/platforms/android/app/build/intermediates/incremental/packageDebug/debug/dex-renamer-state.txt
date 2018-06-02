@@ -1,0 +1,4 @@
+#Sat May 26 23:03:29 ICT 2018
+base.0=C\:\\Users\\Vu Tien Dai\\WebstormProjects\\O_an_quan\\Mobile\\platforms\\android\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\0
+renamed.0=classes.dex
+file.0=C\:\\Users\\Vu Tien Dai\\WebstormProjects\\O_an_quan\\Mobile\\platforms\\android\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\0\\classes.dex

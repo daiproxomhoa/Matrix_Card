@@ -11,7 +11,7 @@ import {Manages} from "./Manages";
 import {isNullOrUndefined} from "util";
 
 class Main {
-
+    bobai=[];
     app = express();
     server = http.createServer(this.app);
     io = SocketIO(this.server);
@@ -26,12 +26,35 @@ class Main {
         this.io.on('connection', this.onConnect);
 
     }
+    create_Card = () => {
+        this.bobai=[];
+        for(let i=0;i<50;i++){
+            if(i%4==1|| i%4==3)
+                this.bobai.push(i);
+        }
+        for(let i =0 ;i<25;i++){
+            let x = Math.floor(Math.abs(Math.random()*25));
+            let y = Math.floor(Math.abs(Math.random()*25));
+            let a = this.bobai[x];
+            this.bobai[x]=this.bobai[y];
+            this.bobai[y]=a;
+        }
+
+        // socket.on("login", (data) => {
+        //     if (!isNullOrUndefined(data))
+        //     this.manages.addUser(new User(data.name,data.sex, socket));
+        // });
+
+    }
+
 
     onConnect = (socket: Socket) => {
         this.count++;
+        this.create_Card();
+        socket.emit('start',this.bobai);
         socket.on("login", (data) => {
             if (!isNullOrUndefined(data)) {
-                 this.query("SELECT * FROM `user` WHERE username ='" + data.name + "' AND password ='" + data.pass + "';", (result) => {
+                this.query("SELECT * FROM `user` WHERE username ='" + data.name + "' AND password ='" + data.pass + "';", (result) => {
                     if (result.length == 1) {
                         socket.emit("login_mgs", result);
                         this.manages.addUser(new User(result[0]['id'], result[0]['username'], result[0]['gold'], result[0]['sex'],result[0]['avatar'], socket));
