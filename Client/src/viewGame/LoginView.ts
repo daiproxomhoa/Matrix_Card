@@ -16,19 +16,19 @@ export class Login extends PIXI.Container {
     constructor(player: Player) {
         super();
         this.player = player;
-        this.createLogin("","");
+        this.createLogin("1","1");
         viewGame.sound.play_BG("Login");
     }
 
     createLogin = (name,pass) => {
         this.removeChildren();
         let backgroud = PIXI.Sprite.fromImage(App.AssetDir + 'Picture/background.jpg');
-        backgroud.width = 1200;
-        backgroud.height = 640;
-        let txtUsername = new TextField(385, 237);
+        backgroud.width = App.W;
+        backgroud.height = App.H;
+        let txtUsername = new TextField(500, 300);
         txtUsername.setText(name);
         txtUsername.scale.set(0.4);
-        let txtPassword = new TextField(385, 300);
+        let txtPassword = new TextField(500, 375);
         txtPassword.setText(pass);
         txtPassword.scale.set(0.4);
         txtUsername.onEnterPress = () => {
@@ -44,8 +44,8 @@ export class Login extends PIXI.Container {
         txtPassword.onClick=()=>{
             txtPassword.setText("");
         }
-        let Loginbtn = new Button(435, 405, "", App.AssetDir + "Picture/IU/loginbtn.png");
-        let Signup = new Button(580, 405, "", App.AssetDir + "Picture/IU/signup.png");
+        let Loginbtn = new Button(550, 475, "", App.AssetDir + "Picture/IU/loginbtn.png");
+        let Signup = new Button(675, 475, "", App.AssetDir + "Picture/IU/signup.png");
         Loginbtn.setSize(new PIXI.Point(100, 50));
         Signup.setSize(new PIXI.Point(100, 50));
         Loginbtn.onClick = () => {
@@ -69,17 +69,17 @@ export class Login extends PIXI.Container {
     createSignup() {
         this.removeChildren();
         let backgroud = PIXI.Sprite.fromImage(App.AssetDir + 'Picture/background.jpg');
-        backgroud.width = 1200;
-        backgroud.height = 640;
-        let txtUsername = new TextField(385, 237);
+        backgroud.width = App.W;
+        backgroud.height = App.H;
+        let txtUsername = new TextField(500, 300);
         txtUsername.scale.set(0.4);
-        let txtPassword = new TextField(385, 300);
+        let txtPassword = new TextField(500, 375);
         txtPassword.scale.set(0.4);
         let sex = new Identity();
-        sex.position.set(405, 345);
-        let Signup = new Button(435,405, "", App.AssetDir + "Picture/IU/signup.png");
+        sex.position.set(520,425);
+        let Signup = new Button(550,475, "", App.AssetDir + "Picture/IU/signup.png");
         Signup.setSize(new PIXI.Point(100, 50));
-        let Back = new Button(580,405, "", App.AssetDir + "Picture/IU/outroom.png");
+        let Back = new Button(675,475, "", App.AssetDir + "Picture/IU/outroom.png");
         Back.setSize(new PIXI.Point(100, 50));
         this.addChild(backgroud, txtUsername, txtPassword, Signup,Back, sex);
         Signup.onClick = () => {

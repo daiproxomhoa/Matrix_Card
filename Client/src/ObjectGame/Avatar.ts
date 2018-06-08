@@ -11,20 +11,20 @@ export class Avatar extends Sprite {
     username: NamePlayer;
     avatar: Sprite;
     dir: string;
-    name :string="";
-    gold :number;
+    name: string = "";
+    gold: number;
 
     constructor() {
         super();
     }
 
-    show = (gold?:number,sex?:boolean,number ?: number, name?: string) => {
+    show = (gold?: number, sex?: boolean, number ?: number, name?: string) => {
 
-            if (!isNullOrUndefined(number && name && sex && gold)) {
-                 this.removeChildren();
-                this.name=name;
-                this.gold=gold;
-            this.username = new NamePlayer(this.name+" : "+this.gold);
+        if (!isNullOrUndefined(number && name && sex && gold)) {
+            this.removeChildren();
+            this.name = name;
+            this.gold = gold;
+            this.username = new NamePlayer(this.name + " : " + this.gold);
             this.username.position.set(152, 325);
             this.sex = sex;
             if (this.sex == true) {
@@ -36,14 +36,13 @@ export class Avatar extends Sprite {
             this.avatar.scale.set(0.2);
             this.addChild(this.username, this.avatar);
         }
-        else if(isNullOrUndefined(number && name && sex )&&!isNullOrUndefined(gold)&&this.children.length>0) {
-                this.gold=gold;
-                this.username.setName(this.name+" : "+this.gold);
+        else if (isNullOrUndefined(number && name && sex) && !isNullOrUndefined(gold) && this.children.length > 0) {
+            this.gold = gold;
+            this.username.setName(this.name + " : " + this.gold);
         }
-        else
-            {
-                this.removeChildren();
-            }
+        else {
+            this.removeChildren();
+        }
     }
     onClick: Function;
 }

@@ -25,6 +25,7 @@ class User {
         this._username = userInfo;
         this._avatarID = avatar;
         this.socket = socket;
+        this._compatior = [];
     }
     // goldsql():number {
     //     let id = this.id;
@@ -78,6 +79,12 @@ class User {
             this._gold = this._gold - gold;
         }
     }
+    get username() {
+        return this._username;
+    }
+    set username(value) {
+        this._username = value;
+    }
     setGold(gold) {
         this._gold = gold;
     }
@@ -114,11 +121,15 @@ class User {
     get id() {
         return this._id;
     }
-    setCompatior(user) {
-        this._compatior = user;
-    }
-    getCompatior() {
-        return this._compatior;
+    broadcast(arr, event, data) {
+        for (let i = 0; i < arr.length; i++) {
+            if (data) {
+                arr[i].socket.emit(event, data);
+            }
+            else {
+                arr[i].socket.emit(event);
+            }
+        }
     }
 }
 exports.User = User;

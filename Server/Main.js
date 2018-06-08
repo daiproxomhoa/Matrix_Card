@@ -12,6 +12,7 @@ const util_1 = require("util");
 class Main {
     constructor() {
         this.bobai = [];
+        this.maincard = [];
         this.app = express();
         this.server = http.createServer(this.app);
         this.io = SocketIO(this.server);
@@ -20,8 +21,9 @@ class Main {
         this.create_Card = () => {
             this.bobai = [];
             for (let i = 0; i < 50; i++) {
-                if (i % 4 == 1 || i % 4 == 3)
+                if (i % 4 == 1 || i % 4 == 3) {
                     this.bobai.push(i);
+                }
             }
             for (let i = 0; i < 25; i++) {
                 let x = Math.floor(Math.abs(Math.random() * 25));
@@ -37,8 +39,8 @@ class Main {
         };
         this.onConnect = (socket) => {
             this.count++;
-            this.create_Card();
-            socket.emit('start', this.bobai);
+            // this.create_Card();
+            // socket.emit('start',this.bobai);
             socket.on("login", (data) => {
                 if (!util_1.isNullOrUndefined(data)) {
                     this.query("SELECT * FROM `user` WHERE username ='" + data.name + "' AND password ='" + data.pass + "';", (result) => {

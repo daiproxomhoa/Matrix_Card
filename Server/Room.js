@@ -1,70 +1,144 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = require("util");
 class Room {
     constructor(id, name) {
         this.users = [];
-        this.turnColor = true;
-        this.player0accept = false;
-        this.player1accept = false;
-        this.turncount = 0;
+        this.ready = [];
         this.bobai = [];
-        this.key = "--/--";
-        this.guest = "--/--";
-        this.score = [0, 0];
-        this.keycount = 0;
+        this.score = [0, 0, 0, 0];
+        this.maincard = [];
+        this.turn = 0;
+        this.isPlaying = false;
         this.addUser = (user) => {
-            if (this.users.length == 2)
+            if (this.users.length == 4)
                 return false;
             this.users.push(user);
             user.idroom = this.id;
             user.isPlaying = true;
-            user.idroom = this.id;
             user.socket.emit("join room success");
+            this.checkInfo();
             if (this.users.length == 1) {
-                this.key = user._username;
-                this.users[0].emit("wait player");
-                this.users[0].on("disconnect", () => {
-                    if (this.users.length == 2 && this.turncount > 2) {
-                        this.users[1].update_gold(Math.abs(20), "+");
-                        this.users[0].update_gold(Math.abs(20), "-");
-                    }
-                    this.onUser0Left(1);
-                }, false);
-                this.users[0].on("left room", () => {
-                    if (this.users.length == 2 && this.turncount > 2) {
-                        this.users[1].update_gold(Math.abs(20), "+");
-                        this.users[0].update_gold(Math.abs(20), "-");
-                    }
-                    this.onUser0Left(2);
-                });
+                this.key = user.id;
+                user.emit("keyroom", true);
             }
-            else if (this.users.length == 2) {
-                this.turnColor = true;
-                this.guest = user._username;
-                this.users[0].emit("set turn", { gameturn: this.turnColor });
-                this.users[1].emit("set turn", { gameturn: !this.turnColor });
-                this.users[1].on("disconnect", () => {
-                    if (this.users.length == 2 && this.turncount > 2) {
-                        this.users[1].update_gold(Math.abs(20), "-");
-                        this.users[0].update_gold(Math.abs(20), "+");
-                    }
-                    this.onUser1Left(1);
-                }, false);
-                this.users[1].on("left room", () => {
-                    if (this.users.length == 2 && this.turncount > 2) {
-                        this.users[1].update_gold(Math.abs(20), "-");
-                        this.users[0].update_gold(Math.abs(20), "+");
-                    }
-                    this.onUser1Left(2);
-                });
+            else {
+                user.emit("keyroom", false);
             }
-            // this.startgame();
+            user.on("ready", () => {
+                if (this.key == user.id) {
+                    this.ready.push(1);
+                    if (this.ready.length == this.users.length && this.users.length > 1) {
+                        this.startgame();
+                    }
+                    else {
+                        this.ready.pop();
+                        user.emit("player is not ready");
+                    }
+                }
+                else {
+                    this.ready.push(1);
+                }
+            });
+            user.on("unready", () => {
+                console.log("un ready");
+                console.log(this.ready.length);
+                if (this.ready.length > 0)
+                    this.ready.pop();
+            });
+            user.on("disconnect", () => {
+                let index = this.users.findIndex((element) => {
+                    return element == user;
+                });
+                this.onUserLeft(index);
+            }, false);
+            user.on("left_room", () => {
+                let index = this.users.findIndex((element) => {
+                    return element == user;
+                });
+                this.onUserLeft(index);
+                user.emit("left_room_ok");
+            });
+            // this.create_Card();
+            // user.emit("start", {bobai: this.bobai, maincard: this.maincard.pop()});
+            // console.log(this.maincard);
+        };
+        this.startgame = () => {
+            this.isPlaying = true;
+            this.ready = [];
+            this.sort();
             this.create_Card();
-            user.emit('start', this.bobai);
+            for (let i = 0; i < this.users.length; i++) {
+                this.users[i].emit("ok_ready", i);
+                this.users[i].emit('set_turn', i.toString());
+                this.users[i].emit('chia_bai', { bobai: this.bobai, maincard: this.maincard[i] });
+                this.users[i].emit('start_game');
+                this.users[i].on("move_left", (data) => {
+                    if (i == this.users.length - 1) {
+                        this.turn = 0;
+                    }
+                    else {
+                        this.turn++;
+                    }
+                    this.MoveLeft(data);
+                    for (let i = 0; i < this.users.length; i++) {
+                        this.users[i].emit("on_left", data);
+                        this.users[i].emit("your_turn", this.turn.toString());
+                    }
+                });
+                this.users[i].on("move_right", (data) => {
+                    console.log(data);
+                    if (i == this.users.length - 1) {
+                        this.turn = 0;
+                    }
+                    else {
+                        this.turn++;
+                    }
+                    this.MoveRight(data);
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("on_right", data);
+                        this.users[i].emit("your_turn", this.turn.toString());
+                    }
+                });
+                this.users[i].on("move_up", (data) => {
+                    if (i == this.users.length - 1) {
+                        this.turn = 0;
+                    }
+                    else {
+                        this.turn++;
+                    }
+                    this.MoveUp(data);
+                    for (let i = 0; i < this.users.length; i++) {
+                        this.users[i].emit("on_up", data);
+                        this.users[i].emit("your_turn", this.turn.toString());
+                    }
+                });
+                this.users[i].on("move_down", (data) => {
+                    if (i == this.users.length - 1) {
+                        this.turn = 0;
+                    }
+                    else {
+                        this.turn++;
+                    }
+                    this.MoveDown(data);
+                    for (let i = 0; i < this.users.length; i++) {
+                        this.users[i].emit("on_down", data);
+                        this.users[i].emit("your_turn", this.turn.toString());
+                    }
+                });
+            }
+        };
+        this.sort = () => {
+            for (let i = 0; i < this.users.length; i++) {
+                if (this.users[i].id == this.key) {
+                    this.users.splice(0, 0, this.users[i]);
+                    this.users.splice(0, i + 1);
+                    return;
+                }
+            }
         };
         this.create_Card = () => {
             this.bobai = [];
+            this.maincard = [];
             for (let i = 0; i < 50; i++) {
                 if (i % 4 == 1 || i % 4 == 3)
                     this.bobai.push(i);
@@ -76,216 +150,135 @@ class Room {
                 this.bobai[x] = this.bobai[y];
                 this.bobai[y] = a;
             }
-            // socket.on("login", (data) => {
-            //     if (!isNullOrUndefined(data))
-            //     this.manages.addUser(new User(data.name,data.sex, socket));
-            // });
-        };
-        this.startgame = () => {
-            this.player0accept = false;
-            this.player1accept = false;
-            this.users[0].setCompatior(this.users[1]);
-            // this.users[1].setCompatior(this.users[0]);
-            // this.users[1].emit('start',this.bobai);
-            console.log("chan vc" + this.bobai);
-            // this.users[0].emit("start game", {
-            //     gameturn: true,
-            //     oppname: this.users[0].getCompatior().getUserName,
-            //     avatar: this.users[0].getCompatior().avatarID,
-            //     sex: this.users[0].getCompatior().sex,
-            //     gold: this.users[0].getCompatior().gold
-            //
-            // });
-            // this.users[1].emit("start game", {
-            //     gameturn: false,
-            //     oppname: this.users[1].getCompatior().getUserName,
-            //     avatar: this.users[1].getCompatior().avatarID,
-            //     sex: this.users[1].getCompatior().sex,
-            //     gold: this.users[1].getCompatior().gold
-            // });
-            // this.users[0].emit("score",{x:this.score[0],y:this.score[1]});
-            // this.users[1].emit("score",{x:this.score[1],y:this.score[0]});
-            // for (let i = 0; i < 2; i++) {
-            //     this.users[i].on("move", (data: any) => {
-            //         if (!isNullOrUndefined(this.users[i])) {
-            //             if(!isNullOrUndefined(this.users[i].getCompatior()))
-            //             this.users[i].getCompatior().emit("opponent move", data);
-            //         }
-            //     });
-            //     this.users[i].on("change turn", (data) => {
-            //         this.keycount++;
-            //         if(data==true){
-            //             this.keyturn=i;
-            //         }
-            //         if(this.keycount==2){
-            //             this.changeturn(this.keyturn);
-            //             this.keycount=0;
-            //
-            //         }
-            //
-            // });
-            // this.users[i].on("end game", (data: any) => {
-            //     if (!isNullOrUndefined(this.users[i])) {
-            //         if (!isNullOrUndefined(this.users[i].getCompatior())) {
-            //             this.users[i].emit("game_end", {result:data.result,src:data.src,src1:data.src1});
-            //             this.users[i].getCompatior().emit("game_end", {result: 4 - data.result, src: data.src,src1:data.src1});
-            //             this.score[i]+=data.src;
-            //             this.score[1-i]+=data.src1;
-            //             if (data.result != 3)
-            //                 this.users[i].emit("restart");
-            //             else
-            //                 this.users[i].getCompatior().emit("restart");
-            //             this.users[i].emit("score",{x:this.score[i],y:this.score[1-i]});
-            //             this.users[i].update_gold(Math.abs(this.score[i]),"+")
-            //             this.users[i].getCompatior().emit("score",{x:this.score[1-i],y:this.score[i]});
-            //             this.users[i].getCompatior().update_gold(Math.abs(this.score[i]),"-")
-            //             this.users[i].emit("Reset2",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
-            //             this.users[i].getCompatior().emit("Reset2",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
-            //             this.turncount=0;
-            //         }
-            //     }
-            // });
-            //
-            // this.users[i].on("send message", (msg: string) => {
-            //     if (!isNullOrUndefined(this.users[i])) {
-            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
-            //         this.users[i].emit("new message", {playername: this.users[i].getUserName, message: msg});
-            //         this.users[i].getCompatior().emit("new message", {
-            //             playername: this.users[i].getUserName,
-            //             message: msg
-            //         });
-            //     }}
-            // });
-            // this.users[i].on("Ready_continue", () => {
-            //     if (!isNullOrUndefined(this.users[i])) {
-            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
-            //         this.users[i].getCompatior().emit("continue_game");
-            //
-            //         if (i == 0) {
-            //             this.player0accept = true;
-            //         }
-            //         else {
-            //             this.player1accept = true;
-            //         }
-            //     }}
-            // });
-            // this.users[i].on("accepted", (data: boolean) => {
-            //     if (!isNullOrUndefined(this.users[i])) {
-            //         if(!isNullOrUndefined(this.users[i].getCompatior())){
-            //         if (data == true) {
-            //             if (i == 0) {
-            //                 this.player0accept = true;
-            //             }
-            //             else
-            //                 this.player1accept = true;
-            //
-            //             if (this.player0accept == this.player1accept) {
-            //                 console.log("OK")
-            //                 if(this.turncount>2) {
-            //                     this.users[i].getCompatior().update_gold(20, "-")
-            //                     this.users[i].update_gold(20, "+");
-            //                 }
-            //                 this.users[i].emit("Reset",{me:this.users[i].gold,you:this.users[i].getCompatior().gold});
-            //                 this.users[i].getCompatior().emit("Reset",{me:this.users[i].getCompatior().gold,you:this.users[i].gold});
-            //                 let second  = this.users[i].getCompatior();
-            //                 let first= this.users[i];
-            //                 this.users = [];
-            //                 this.addUser(first);
-            //                 this.addUser(second);
-            //                 this.turncount=0;
-            //             }
-            //         }
-            //         else {
-            //             this.player0accept = false;
-            //             this.player1accept = false;
-            //         }
-            //     }}
-            // });
-            // }
-        };
-        this.onUser0Left = (c) => {
-            this.score = [0, 0];
-            this.key = "--/--";
-            this.guest = "--/--";
-            this.turncount = 0;
-            if (this.users.length == 1) {
-                this.users[0].setCompatior(null);
-                if (c == 2)
-                    this.users[0].isPlaying = false;
-                if (c == 1)
-                    this.users[0].isPlaying = null;
-                this.users[0].idroom = null;
-                this.users = [];
-            }
-            else if (this.users.length == 2) {
-                this.users[0].setCompatior(null);
-                this.users[1].setCompatior(null);
-                if (c == 2) {
-                    this.users[0].isPlaying = false;
-                    this.users[1].isPlaying = false;
+            while (this.maincard.length < this.users.length) {
+                let i = Math.floor(Math.abs(Math.random() * 25));
+                if (this.isContant(this.bobai[i]) == false) {
+                    this.maincard.push(this.bobai[i]);
                 }
-                if (c == 1) {
-                    this.users[0].isPlaying = null;
-                    this.users[1].isPlaying = null;
-                }
-                this.users[0].idroom = null;
-                let us = this.users[1];
-                this.users = [];
-                this.addUser(us);
-                this.users[0].emit("user left");
             }
         };
-        this.onUser1Left = (c) => {
-            this.score = [0, 0];
-            this.key = "--/--";
-            this.guest = "--/--";
-            this.turncount = 0;
-            if (this.users.length == 1) {
-                this.users[0].setCompatior(null);
-                if (c == 2)
-                    this.users[0].isPlaying = false;
-                if (c == 1)
-                    this.users[0].isPlaying = null;
-                this.users[0].idroom = null;
-                this.users = [];
-                this.key = "--/--";
+        this.getInfo = () => {
+            let infoArr = [];
+            for (let i = 0; i < this.users.length; i++) {
+                infoArr.push({
+                    id: this.users[i].id,
+                    name: this.users[i].username,
+                    avatar: this.users[i].avatarID,
+                    gold: this.users[i].gold,
+                    sex: this.users[i].sex,
+                });
             }
-            else if (this.users.length == 2) {
-                this.users[0].setCompatior(null);
-                this.users[1].setCompatior(null);
-                if (c == 2) {
-                    this.users[0].isPlaying = false;
-                    this.users[1].isPlaying = false;
-                }
-                if (c == 1) {
-                    this.users[0].isPlaying = null;
-                    this.users[1].isPlaying = null;
-                }
-                this.users[0].idroom = null;
-                let us = this.users[0];
-                this.users = [];
-                this.addUser(us);
-                this.users[0].emit("user left");
-            }
+            return infoArr;
         };
-        this.changeturn = (i) => {
-            this.turncount++;
-            if (!util_1.isNullOrUndefined(this.users[i])) {
-                if (!util_1.isNullOrUndefined(this.users[i].getCompatior())) {
-                    this.turnColor = !this.turnColor;
-                    this.users[i].getCompatior().emit("turn color", { turn: this.turnColor });
-                    this.users[i].emit("turn color", { turn: this.turnColor });
+        this.checkInfo = () => {
+            for (let i = 0; i < this.users.length; i++) {
+                this.users[i].emit("info_players", this.getInfo());
+            }
+            // console.log("dagui");
+        };
+        this.MoveUp = (data) => {
+            let row = Math.floor(data / 5);
+            let col = data % 5;
+            let temp;
+            for (let i = col; i < 21 + col; i = i + 5) {
+                if (i == col) {
+                    temp = this.bobai[i];
                 }
+                else {
+                    this.bobai[i - 5] = this.bobai[i];
+                    this.bobai[i - 5] = i - 5;
+                }
+            }
+            temp = 20 + col;
+            this.bobai[20 + col] = temp;
+        };
+        this.MoveDown = (data) => {
+            let row = Math.floor(data / 5);
+            let col = data % 5;
+            let length = data;
+            let temp;
+            for (let i = 20 + col; i > col - 1; i = i - 5) {
+                if (i == 20 + col) {
+                    temp = this.bobai[i];
+                }
+                if (i > col) {
+                    this.bobai[i] = this.bobai[i - 5];
+                    this.bobai[i] = i;
+                }
+            }
+            this.bobai[col] = temp;
+            this.bobai[col] = col;
+        };
+        this.MoveRight = (data) => {
+            let row = Math.floor(data / 5);
+            let col = data % 5;
+            let length = data;
+            let temp;
+            for (let i = length + 4 - col; i > length - col - 1; i--) {
+                if (i == length + 4 - col) {
+                    temp = this.bobai[i];
+                }
+                if (i > length - col) {
+                    this.bobai[i] = this.bobai[i - 1];
+                    this.bobai[i] = i;
+                }
+            }
+            this.bobai[length - col] = temp;
+            this.bobai[length - col] = length - col;
+        };
+        this.MoveLeft = (data) => {
+            let row = Math.floor(data / 5);
+            let col = data % 5;
+            let temp;
+            let length = data;
+            for (let i = length - col; i < length + 5 - col; i++) {
+                if (i == length - col) {
+                    temp = this.bobai[i];
+                }
+                else {
+                    this.bobai[i - 1] = this.bobai[i];
+                    this.bobai[i - 1] = i - 1;
+                }
+            }
+            temp = length + 4 - col;
+            this.bobai[length + 4 - col] = temp;
+        };
+        this.onUserLeft = (i) => {
+            console.log("left room" + i);
+            this.ready = [];
+            this.users[i].isPlaying = false;
+            this.users[i].idroom = null;
+            this.users.splice(i, 1);
+            this.checkInfo();
+            if (this.users.length < 2) {
+                this.isPlaying = false;
             }
         };
         this.isFull = () => {
-            if (this.users.length >= 2) {
+            if (this.users.length >= 4 || this.isPlaying == true) {
                 return true;
             }
             return false;
         };
         this.id = id;
         this.name = name;
+        this.users = [];
+        this.ready = [];
+    }
+    isContant(value) {
+        for (let i = 0; i < this.maincard.length; i++) {
+            if (this.maincard[i] == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+    get getUsername() {
+        let arr = [];
+        for (let i = 0; i < this.users.length; i++) {
+            arr.push(this.users[i].username);
+        }
+        return arr;
     }
 }
 exports.Room = Room;

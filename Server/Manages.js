@@ -7,7 +7,7 @@ const Room_1 = require("./Room");
 class Manages {
     constructor() {
         this.addUser = (user) => {
-            if (this.isOnline(user._username) == false) {
+            if (this.isOnline(user.username) == false) {
                 this.users.push(user);
                 user.emit("OK");
                 this.initPlayerEvent(user);
@@ -21,7 +21,7 @@ class Manages {
                 user.emit("InviteList", this.getInvite());
             });
             user.on("getInfo", () => {
-                user.emit("setInfo", { id: user._id, name: user._username, avatar: user.avatarID, sex: user.sex, gold: user.gold });
+                user.emit("setInfo", { id: user._id, name: user.username, avatar: user.avatarID, sex: user.sex, gold: user.gold });
             });
             user.on("join room", (roomID) => {
                 let findRoom = false;
@@ -50,7 +50,7 @@ class Manages {
             }, false);
             user.on("invited", (data) => {
                 for (let i = 0; i < this.users.length; i++) {
-                    if (this.users[i]._username == data.guest) {
+                    if (this.users[i].username == data.guest) {
                         console.log("Moi ");
                         this.users[i].emit("enjoy", { key: data.key, id: user.idroom });
                         break;
@@ -64,7 +64,7 @@ class Manages {
         };
         this.isOnline = (userName) => {
             for (let i = 0; i < this.users.length; i++) {
-                if (this.users[i]._username == userName)
+                if (this.users[i].username == userName)
                     return true;
             }
             return false;
@@ -73,18 +73,17 @@ class Manages {
             let invite = [];
             for (let i = 0; i < this.users.length; i++) {
                 if (this.users[i].isPlaying == false)
-                    invite.push({ name: this.users[i]._username });
+                    invite.push({ name: this.users[i].username });
             }
             return invite;
         };
         this.getRoomList = () => {
             let roomArr = [];
             for (let i = 0; i < this.rooms.length; i++) {
+                let arr = this.rooms[i].getUsername;
                 roomArr.push({
                     id: this.rooms[i].id,
-                    key: this.rooms[i].key,
-                    guest: this.rooms[i].guest,
-                    playerNumber: this.rooms[i].users.length
+                    key: arr,
                 });
             }
             return roomArr;

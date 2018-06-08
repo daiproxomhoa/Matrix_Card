@@ -89,11 +89,6 @@ class Hall extends Container {
             this.player.on("room full", () => {
                 Panel_1.Panel.showMessageDialog("This room is full", () => { }, false);
             });
-            this.player.on("join room success", () => {
-                viewGame_1.viewGame.Hall.visible = false;
-                // viewGame.Game.visible = true;
-                // viewGame.Game.My_name.show(this.player.gold,this.player.sex, this.player.avatar, this.player.username);
-            });
         };
         this.getRoomList = (rooms) => {
             this.first.removeChildren();
@@ -158,16 +153,16 @@ class BarItem extends Button_1.Button {
             this.id = new PIXI.Text("Room " + data.id, style);
         this.id.anchor.set(0.5);
         this.id.y = -70;
-        let guest = new PIXI.Text(data.guest, style);
-        guest.anchor.set(0.5);
-        guest.y = 25;
-        let key = new PIXI.Text(data.key, style);
-        key.anchor.set(0.5);
-        key.y = -15;
-        let players = new PIXI.Text(data.playerNumber + "/2", style);
+        for (let i = 0; i < data.key.length; i++) {
+            let player = new PIXI.Text("~" + data.key[i], style);
+            player.anchor.set(0.5);
+            player.y = -40 + i * 25;
+            this.addChild(player);
+        }
+        let players = new PIXI.Text(data.key.length + "/4", style);
         players.anchor.set(0.5);
         players.y = 70;
-        this.addChild(this.id, guest, key, players);
+        this.addChild(this.id, players);
     }
 }
 //# sourceMappingURL=Hallview.js.map

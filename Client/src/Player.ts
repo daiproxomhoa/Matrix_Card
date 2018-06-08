@@ -20,7 +20,7 @@ export class Player {
         this._socket = io(App.Host);
     }
     on = (event: string, callback: any) => {
-        this.socket.removeEventListener(event);
+        // this.socket.removeEventListener(event);
         this.socket.on(event, callback);
     };
 

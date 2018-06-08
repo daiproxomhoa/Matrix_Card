@@ -10,7 +10,7 @@ class Player {
         this._username = "";
         this._oppname = "";
         this.on = (event, callback) => {
-            this.socket.removeEventListener(event);
+            // this.socket.removeEventListener(event);
             this.socket.on(event, callback);
         };
         this.emit = (event, data) => {

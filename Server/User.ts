@@ -4,16 +4,26 @@ import Socket = SocketIO.Socket;
  */
 
 export class User {
-    _username: string;
+
+    private _username: string;
     _gold: number;
     _id: number
     private _avatarID: number;
-    _compatior: User;
+    _compatior: User[];
     private _isPlaying = false;
     private _idroom: number;
     private _sex: boolean;
     socket: Socket;
 
+    constructor(id: number, userInfo: string, gold: number, sex: boolean, avatar: number, socket: Socket) {
+        this._sex = sex;
+        this._id = id;
+        this._gold = gold;
+        this._username = userInfo;
+        this._avatarID = avatar;
+        this.socket = socket;
+        this._compatior=[];
+    }
     // goldsql():number {
     //     let id = this.id;
     //
@@ -67,7 +77,13 @@ export class User {
         }
 
     }
+    get username(): string {
+        return this._username;
+    }
 
+    set username(value: string) {
+        this._username = value;
+    }
     setGold(gold: number) {
         this._gold = gold;
     }
@@ -101,14 +117,6 @@ export class User {
     }
 
 
-    constructor(id: number, userInfo: string, gold: number, sex: boolean, avatar: number, socket: Socket) {
-        this._sex = sex;
-        this._id = id;
-        this._gold = gold;
-        this._username = userInfo;
-        this._avatarID = avatar;
-        this.socket = socket;
-    }
 
     set idroom(value: number) {
         this._idroom = value;
@@ -126,12 +134,14 @@ export class User {
         return this._id;
     }
 
-    setCompatior(user: User) {
-        this._compatior = user;
-    }
-
-    getCompatior(): User {
-        return this._compatior;
+    broadcast(arr:User[],event: string, data?: any) {
+        for (let i = 0; i < arr.length; i++) {
+            if (data) {
+                arr[i].socket.emit(event, data);
+            } else {
+                arr[i].socket.emit(event);
+            }
+        }
     }
 
     on = (event: string, fn: Function, clear = true) => {
