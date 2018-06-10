@@ -10,6 +10,7 @@ const Setting_1 = require("../IU/Setting");
 const Invite_1 = require("../IU/Invite");
 const Hallview_1 = require("./Hallview");
 const Game_1 = require("./Game");
+const util_1 = require("util");
 /**
  * Created by Vu Tien Dai on 21/11/2017.
  */
@@ -54,7 +55,7 @@ class viewGame {
             this.player.sex = data.sex;
             this.player.gold = data.gold;
             console.log(data);
-            viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username);
+            viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username, this.player.id);
         };
         this.eventGame = () => {
             this.player.on("left_room_ok", () => {
@@ -79,6 +80,9 @@ class viewGame {
             this.player.on("set_turn", (data) => {
                 viewGame.Game.emit("set_turn", data);
             });
+            this.player.on("reset_turn", (data) => {
+                viewGame.Game.emit("reset_turn", data);
+            });
             this.player.on("on_left", (data) => {
                 let index = 0;
                 if (!isNaN(data)) {
@@ -95,24 +99,24 @@ class viewGame {
             });
             this.player.on("on_up", (data) => {
                 let index = 0;
-                if (!isNaN(data)) {
+                if (!util_1.isNullOrUndefined(data)) {
                     index = data;
                 }
                 viewGame.Game.boardGame.moveUp(index);
             });
             this.player.on("on_down", (data) => {
                 let index = 0;
-                if (!isNaN(data)) {
+                if (!util_1.isNullOrUndefined(data)) {
                     index = data;
                 }
                 viewGame.Game.boardGame.moveDown(index);
             });
             this.player.on("your_turn", (data) => {
-                // let turn = 0;
-                // if (!isNaN(data)) {
-                //     turn = data
-                // }
-                viewGame.Game.emit("your_turn", data);
+                let turn = 0;
+                if (!util_1.isNullOrUndefined(data)) {
+                    turn = data;
+                }
+                viewGame.Game.emit("your_turn", turn);
             });
             this.player.on("info_players", (data) => {
                 viewGame.Game.emit("info_players", data);

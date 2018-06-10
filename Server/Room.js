@@ -7,6 +7,7 @@ class Room {
         this.bobai = [];
         this.score = [0, 0, 0, 0];
         this.maincard = [];
+        this.mainid = [];
         this.turn = 0;
         this.isPlaying = false;
         this.addUser = (user) => {
@@ -40,8 +41,6 @@ class Room {
                 }
             });
             user.on("unready", () => {
-                console.log("un ready");
-                console.log(this.ready.length);
                 if (this.ready.length > 0)
                     this.ready.pop();
             });
@@ -57,6 +56,22 @@ class Room {
                 });
                 this.onUserLeft(index);
                 user.emit("left_room_ok");
+                console.log();
+                if (index == this.turn) {
+                    if (index == this.users.length) {
+                        this.turn = 0;
+                        for (let j = 0; j < this.users.length; j++) {
+                            this.users[j].emit("reset_turn", j.toString());
+                            this.users[j].emit("your_turn", this.turn);
+                        }
+                    }
+                }
+            });
+            user.on("send message", (msg) => {
+                console.log(this.users.length);
+                for (let j = 0; j < this.users.length; j++) {
+                    this.users[j].emit("new message", { playername: user.getUserName, message: msg });
+                }
             });
             // this.create_Card();
             // user.emit("start", {bobai: this.bobai, maincard: this.maincard.pop()});
@@ -69,60 +84,93 @@ class Room {
             this.create_Card();
             for (let i = 0; i < this.users.length; i++) {
                 this.users[i].emit("ok_ready", i);
-                this.users[i].emit('set_turn', i.toString());
+                this.users[i].emit('set_turn', { turn: i.toString(), id: this.users[0].id });
                 this.users[i].emit('chia_bai', { bobai: this.bobai, maincard: this.maincard[i] });
                 this.users[i].emit('start_game');
                 this.users[i].on("move_left", (data) => {
-                    if (i == this.users.length - 1) {
+                    if (this.turn >= this.users.length - 1) {
                         this.turn = 0;
                     }
                     else {
                         this.turn++;
                     }
-                    this.MoveLeft(data);
-                    for (let i = 0; i < this.users.length; i++) {
-                        this.users[i].emit("on_left", data);
-                        this.users[i].emit("your_turn", this.turn.toString());
+                    let index = 0;
+                    if (!isNaN(data)) {
+                        index = data;
+                    }
+                    this.MoveLeft(index);
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("on_left", data);
+                        this.users[j].emit("your_turn", this.turn.toString());
                     }
                 });
                 this.users[i].on("move_right", (data) => {
-                    console.log(data);
-                    if (i == this.users.length - 1) {
+                    if (this.turn >= this.users.length - 1) {
                         this.turn = 0;
                     }
                     else {
                         this.turn++;
                     }
-                    this.MoveRight(data);
+                    let index = 0;
+                    if (!isNaN(data)) {
+                        index = data;
+                    }
+                    this.MoveRight(index);
                     for (let j = 0; j < this.users.length; j++) {
                         this.users[j].emit("on_right", data);
-                        this.users[i].emit("your_turn", this.turn.toString());
+                        this.users[j].emit("your_turn", this.turn.toString());
                     }
                 });
                 this.users[i].on("move_up", (data) => {
-                    if (i == this.users.length - 1) {
+                    if (this.turn >= this.users.length - 1) {
                         this.turn = 0;
                     }
                     else {
                         this.turn++;
                     }
-                    this.MoveUp(data);
-                    for (let i = 0; i < this.users.length; i++) {
-                        this.users[i].emit("on_up", data);
-                        this.users[i].emit("your_turn", this.turn.toString());
+                    let index = 0;
+                    if (!isNaN(data)) {
+                        index = data;
+                    }
+                    this.MoveUp(index);
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("on_up", data);
+                        this.users[j].emit("your_turn", this.turn.toString());
                     }
                 });
                 this.users[i].on("move_down", (data) => {
-                    if (i == this.users.length - 1) {
+                    if (this.turn >= this.users.length - 1) {
                         this.turn = 0;
                     }
                     else {
                         this.turn++;
                     }
-                    this.MoveDown(data);
-                    for (let i = 0; i < this.users.length; i++) {
-                        this.users[i].emit("on_down", data);
-                        this.users[i].emit("your_turn", this.turn.toString());
+                    let index = 0;
+                    if (!isNaN(data)) {
+                        index = data;
+                    }
+                    this.MoveDown(index);
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("on_down", data);
+                        this.users[j].emit("your_turn", this.turn.toString());
+                    }
+                });
+                this.users[i].on("attack", (data) => {
+                    console.log("data " + data.index);
+                    console.log("bai " + this.bobai[data.index]);
+                    this.Attack(data);
+                    if (this.turn == this.users.length - 1) {
+                        this.turn = 0;
+                    }
+                    else {
+                        this.turn++;
+                    }
+                    let index = 0;
+                    if (!isNaN(data)) {
+                        index = data;
+                    }
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("your_turn", this.turn.toString());
                     }
                 });
             }
@@ -139,6 +187,7 @@ class Room {
         this.create_Card = () => {
             this.bobai = [];
             this.maincard = [];
+            this.mainid = [];
             for (let i = 0; i < 50; i++) {
                 if (i % 4 == 1 || i % 4 == 3)
                     this.bobai.push(i);
@@ -152,9 +201,12 @@ class Room {
             }
             while (this.maincard.length < this.users.length) {
                 let i = Math.floor(Math.abs(Math.random() * 25));
+                let j = 0;
                 if (this.isContant(this.bobai[i]) == false) {
                     this.maincard.push(this.bobai[i]);
+                    this.mainid.push(this.users[j].id);
                 }
+                j++;
             }
         };
         this.getInfo = () => {
@@ -166,6 +218,7 @@ class Room {
                     avatar: this.users[i].avatarID,
                     gold: this.users[i].gold,
                     sex: this.users[i].sex,
+                    key: this.key
                 });
             }
             return infoArr;
@@ -186,10 +239,8 @@ class Room {
                 }
                 else {
                     this.bobai[i - 5] = this.bobai[i];
-                    this.bobai[i - 5] = i - 5;
                 }
             }
-            temp = 20 + col;
             this.bobai[20 + col] = temp;
         };
         this.MoveDown = (data) => {
@@ -203,11 +254,9 @@ class Room {
                 }
                 if (i > col) {
                     this.bobai[i] = this.bobai[i - 5];
-                    this.bobai[i] = i;
                 }
             }
             this.bobai[col] = temp;
-            this.bobai[col] = col;
         };
         this.MoveRight = (data) => {
             let row = Math.floor(data / 5);
@@ -220,14 +269,11 @@ class Room {
                 }
                 if (i > length - col) {
                     this.bobai[i] = this.bobai[i - 1];
-                    this.bobai[i] = i;
                 }
             }
             this.bobai[length - col] = temp;
-            this.bobai[length - col] = length - col;
         };
         this.MoveLeft = (data) => {
-            let row = Math.floor(data / 5);
             let col = data % 5;
             let temp;
             let length = data;
@@ -237,21 +283,62 @@ class Room {
                 }
                 else {
                     this.bobai[i - 1] = this.bobai[i];
-                    this.bobai[i - 1] = i - 1;
                 }
             }
-            temp = length + 4 - col;
             this.bobai[length + 4 - col] = temp;
         };
+        this.Attack = (data) => {
+            let row = Math.floor(data.index / 5);
+            let col = data.index % 5;
+            let i = data.index;
+            let check = [];
+            if (col != 0) {
+                check.push(i - 1);
+            }
+            if (col != 4) {
+                check.push(i + 1);
+            }
+            if (row != 0) {
+                check.push(i - 5);
+            }
+            if (row != 4) {
+                check.push(i + 5);
+            }
+            if (col != 0 && row != 0) {
+                check.push(i - 6);
+            }
+            if (col != 0 && row != 4) {
+                ;
+                check.push(i + 4);
+            }
+            if (col != 4 && row != 0) {
+                check.push(i - 4);
+            }
+            if (col != 4 && row != 4) {
+                check.push(i + 6);
+            }
+            for (let j = 0; j < check.length; j++) {
+                if (this.bobai[check[j]] == data.index) {
+                    // for (let i = 0; i < this.maincard.length; i++) {
+                    //     if (this.maincard[i] == this.bobai[check[j]] && this.mainid[i] == data.id) {
+                    //         console.log("ban trung roi" + data.id);
+                    //         break;
+                    //     }
+                    // }
+                    console.log("ban trung roi" + data.id);
+                }
+            }
+        };
         this.onUserLeft = (i) => {
-            console.log("left room" + i);
-            this.ready = [];
-            this.users[i].isPlaying = false;
-            this.users[i].idroom = null;
-            this.users.splice(i, 1);
-            this.checkInfo();
-            if (this.users.length < 2) {
-                this.isPlaying = false;
+            if (i >= 0) {
+                this.ready = [];
+                this.users[i].isPlaying = false;
+                this.users[i].idroom = null;
+                this.users.splice(i, 1);
+                this.checkInfo();
+                if (this.users.length < 2) {
+                    this.isPlaying = false;
+                }
             }
         };
         this.isFull = () => {

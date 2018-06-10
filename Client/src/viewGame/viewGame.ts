@@ -10,6 +10,7 @@ import {Setting} from "../IU/Setting";
 import {Invite} from "../IU/Invite";
 import {Hall} from "./Hallview";
 import {Game} from "./Game";
+import {isNullOrUndefined} from "util";
 
 /**
  * Created by Vu Tien Dai on 21/11/2017.
@@ -86,7 +87,7 @@ export class viewGame {
         this.player.sex = data.sex;
         this.player.gold = data.gold;
         console.log(data);
-        viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username);
+        viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username,this.player.id);
     }
     eventGame = () => {
         this.player.on("left_room_ok", () => {
@@ -111,6 +112,10 @@ export class viewGame {
         this.player.on("set_turn", (data) => {
             viewGame.Game.emit("set_turn", data);
         });
+        this.player.on("reset_turn", (data) => {
+            viewGame.Game.emit("reset_turn", data)
+        });
+
         this.player.on("on_left", (data) => {
             let index = 0;
             if (!isNaN(data)) {
@@ -129,7 +134,7 @@ export class viewGame {
         });
         this.player.on("on_up",  (data) => {
             let index = 0;
-            if (!isNaN(data)) {
+            if (!isNullOrUndefined(data)) {
                 index = data
             }
             viewGame.Game.boardGame.moveUp(index);
@@ -137,18 +142,18 @@ export class viewGame {
         });
         this.player.on("on_down",  (data) => {
             let index = 0;
-            if (!isNaN(data)) {
+            if (!isNullOrUndefined(data)) {
                 index = data
             }
             viewGame.Game.boardGame.moveDown(index);
 
         });
         this.player.on("your_turn", (data) => {
-            // let turn = 0;
-            // if (!isNaN(data)) {
-            //     turn = data
-            // }
-            viewGame.Game.emit("your_turn", data);
+            let turn = 0;
+            if (!isNullOrUndefined(data)) {
+                turn = data
+            }
+            viewGame.Game.emit("your_turn", turn);
         })
         this.player.on("info_players", (data) => {
             viewGame.Game.emit("info_players", data)

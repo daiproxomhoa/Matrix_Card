@@ -128,7 +128,7 @@ class BoardGame extends Container {
                 }
                 this.ui_context.visible = true;
             };
-            this.btn_atk = new Button_1.Button(1000, 310, "Attack");
+            this.btn_atk = new Button_1.Button(995, 310, "Attack");
             this.btn_atk.setSize(size);
             this.btn_atk.onClick = () => {
                 if (!util_1.isNullOrUndefined(this.main_card)) {
@@ -138,8 +138,7 @@ class BoardGame extends Container {
                         this.btn_dec.interactive = false;
                         this.btn_move.alpha = 0.7;
                         this.btn_dec.alpha = 0.7;
-                        this.btn_confirm.interactive = true;
-                        this.btn_confirm.alpha = 1;
+                        this.target_context.visible = true;
                         this.Attack(true);
                         count2++;
                     }
@@ -153,8 +152,7 @@ class BoardGame extends Container {
                         this.btn_dec.interactive = true;
                         this.btn_move.alpha = 1;
                         this.btn_dec.alpha = 1;
-                        this.btn_confirm.interactive = false;
-                        this.btn_confirm.alpha = 0;
+                        this.target_context.visible = false;
                         this.Attack(false);
                         this.privious = null;
                         count2 = 0;
@@ -162,7 +160,7 @@ class BoardGame extends Container {
                 }
                 this.ui_context.visible = true;
             };
-            this.btn_dec = new Button_1.Button(1135, 310, "Detection");
+            this.btn_dec = new Button_1.Button(1130, 310, "Detection");
             this.btn_dec.setSize(size);
             this.btn_dec.onClick = () => {
                 if (!util_1.isNullOrUndefined(this.index_card) && count3 == 0) {
@@ -177,30 +175,59 @@ class BoardGame extends Container {
                 }
                 this.ui_context.visible = true;
             };
-            this.btn_confirm = new Button_1.Button(1000, 355, "Go");
-            this.btn_confirm.setSize(size);
-            this.btn_confirm.interactive = false;
-            this.btn_confirm.alpha = 0;
-            this.btn_confirm.onClick = () => {
-                if (!util_1.isNullOrUndefined(this.index_attack)) {
-                    for (let i = 0; i < this.cards.length; i++) {
-                        this.cards[i].interactive = true;
-                        this.cards[i].setStroke = 0;
-                        // this.player.emit("attack",this.index_attack.index);
-                    }
-                    console.log("attack : " + this.index_attack.str);
-                    this.btn_move.interactive = true;
-                    this.btn_dec.interactive = true;
-                    this.btn_move.alpha = 1;
-                    this.btn_dec.alpha = 1;
-                    this.btn_confirm.interactive = false;
-                    this.btn_confirm.alpha = 0;
-                    this.atk = false;
-                    this.privious = null;
-                    this.index_attack = null;
+            // target = new Button(1000, 355, "Go");
+            // target.setSize(size);
+            // target.interactive = false;
+            // target.alpha = 0;
+            // target.onClick = () => {
+            //     if (!isNullOrUndefined(this.index_attack)) {
+            //         for (let i = 0; i < this.cards.length; i++) {
+            //             this.cards[i].interactive = true;
+            //             this.cards[i].setStroke = 0;
+            //             // this.player.emit("attack",this.index_attack.index);
+            //         }
+            //         console.log("attack : " + this.index_attack.str);
+            //         this.btn_move.interactive = true;
+            //         this.btn_dec.interactive = true;
+            //         this.btn_move.alpha = 1;
+            //         this.btn_dec.alpha = 1;
+            //         target.interactive = false;
+            //         target.alpha = 0;
+            //         this.atk = false;
+            //         this.privious = null;
+            //         this.index_attack = null;
+            //     }
+            // }
+            this.ui_context.addChild(this.btn_move, this.btn_atk, this.btn_dec);
+        };
+        this.onTarget = (data) => {
+            this.target_context.removeChildren();
+            for (let i = 0; i < data.length; i++) {
+                if (data[i].id != this.player.id) {
+                    let target = new Button_1.Button(860 + 135 * i, 355, data[i].name + " ");
+                    let size = new PIXI.Point(120, 40);
+                    target.setSize(size);
+                    target.onClick = () => {
+                        if (!util_1.isNullOrUndefined(this.index_attack)) {
+                            for (let i = 0; i < this.cards.length; i++) {
+                                this.cards[i].interactive = true;
+                                this.cards[i].setStroke = 0;
+                            }
+                            this.player.emit("attack", { id: data[i].id, index: this.index_attack.index });
+                            console.log("attack : " + this.index_attack.str);
+                            this.btn_move.interactive = true;
+                            this.btn_dec.interactive = true;
+                            this.btn_move.alpha = 1;
+                            this.btn_dec.alpha = 1;
+                            this.target_context.visible = false;
+                            this.atk = false;
+                            this.privious = null;
+                            this.index_attack = null;
+                        }
+                    };
+                    this.target_context.addChild(target);
                 }
-            };
-            this.ui_context.addChild(this.btn_move, this.btn_atk, this.btn_dec, this.btn_confirm);
+            }
         };
         this.Attack = (val) => {
             let value;
@@ -278,7 +305,8 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            setTimeout(this.resetPos, 2500);
+            this.showCard();
+            setTimeout(this.resetPos, 2000);
         };
         this.moveDown = (data) => {
             let row = Math.floor(data / 5);
@@ -307,7 +335,8 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            setTimeout(this.resetPos, 2500);
+            this.showCard();
+            setTimeout(this.resetPos, 2000);
         };
         this.moveRight = (data) => {
             let row = Math.floor(data / 5);
@@ -337,7 +366,7 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            setTimeout(this.resetPos, 2500);
+            setTimeout(this.resetPos, 2000);
         };
         this.moveLeft = (data) => {
             let row = Math.floor(data / 5);
@@ -362,7 +391,8 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            setTimeout(this.resetPos, 2500);
+            this.showCard();
+            setTimeout(this.resetPos, 2000);
         };
         this.setMainCard = (data) => {
             for (let i = 0; i < this.cards.length; i++) {
@@ -382,14 +412,25 @@ class BoardGame extends Container {
             }
         };
         this.intactiveFalse = () => {
+            this.index_card = null;
             this.interactiveChildren = false;
             this.ui_context.alpha = 0.7;
+            this.target_context.visible = false;
             for (let i = 0; i < this.cards.length; i++) {
                 this.cards[i].setStroke = 0;
             }
         };
         this.intactiveTrue = () => {
             this.interactiveChildren = true;
+            this.ui_context.alpha = 1;
+            this.target_context.visible = false;
+        };
+        this.showCard = () => {
+            let x = "";
+            for (let i = 0; i < this.cards.length; i++) {
+                x += " " + this.cards[i].value;
+            }
+            console.log(x);
         };
         this.cards = [];
         this.player = data;
@@ -399,7 +440,9 @@ class BoardGame extends Container {
         this.board_game = new Container();
         this.board_game.position.set(260, 40);
         this.ui_context = new Container();
-        this.addChild(this.board_game, this.ui_context);
+        this.target_context = new Container();
+        this.target_context.visible = false;
+        this.addChild(this.board_game, this.ui_context, this.target_context);
         this.createCardBoard();
         this.on("move_left", () => {
             this.player.emit("move_left", this.index_card.index);
