@@ -272,7 +272,7 @@ export class BoardGame extends Container {
                             this.cards[i].setStroke = 0;
 
                         }
-                        this.player.emit("attack", {id: data[i].id, index: this.index_attack.index});
+                        this.player.emit("attack", {id: data[i].id, index: this.main_card.index,value:this.index_attack.value});
                         console.log("attack : " + this.index_attack.str);
                         this.btn_move.interactive = true;
                         this.btn_dec.interactive = true;
@@ -301,15 +301,12 @@ export class BoardGame extends Container {
         let i = this.main_card.index;
         let check = [];
         if (col != 0) {
-            this.cards[i - 1].setStrokeGreen = value;
             check.push(i - 1);
         }
         if (col != 4) {
-            this.cards[i + 1].setStrokeGreen = value;
             check.push(i + 1);
         }
         if (row != 0) {
-            this.cards[i - 5].setStrokeGreen = value;
             check.push(i - 5);
         }
         if (row != 4) {
@@ -317,20 +314,19 @@ export class BoardGame extends Container {
             check.push(i + 5);
         }
         if (col != 0 && row != 0) {
-            this.cards[i - 6].setStrokeGreen = value;
             check.push(i - 6);
         }
         if (col != 0 && row != 4) {
-            this.cards[i + 4].setStrokeGreen = value;
             check.push(i + 4);
         }
         if (col != 4 && row != 0) {
-            this.cards[i - 4].setStrokeGreen = value;
             check.push(i - 4);
         }
         if (col != 4 && row != 4) {
-            this.cards[i + 6].setStrokeGreen = value;
             check.push(i + 6);
+        }
+        for (let j = 0; j < check.length; j++) {
+            this.cards[check[j]].setStrokeGreen = value;
         }
         if (val == true) {
             for (let i = 0; i < this.cards.length; i++) {

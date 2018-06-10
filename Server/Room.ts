@@ -174,8 +174,8 @@ export class Room {
                 }
             })
             this.users[i].on("attack", (data) => {
-                console.log("data "+data.index);
-                console.log("bai "+ this.bobai[data.index]);
+                console.log("index "+data.index);
+                console.log("value "+ data.value);
                 this.Attack(data);
                 if (this.turn == this.users.length - 1) {
                     this.turn = 0;
@@ -222,12 +222,12 @@ export class Room {
 
         while (this.maincard.length < this.users.length) {
             let i = Math.floor(Math.abs(Math.random() * 25));
-            let j = 0;
             if (this.isContant(this.bobai[i]) == false) {
                 this.maincard.push(this.bobai[i]);
-                this.mainid.push(this.users[j].id);
             }
-            j++;
+        }
+        for(let i =0;i<this.users.length;i++){
+            this.mainid.push(this.users[i].id);
         }
     }
     isContant(value): boolean {
@@ -342,7 +342,6 @@ export class Room {
             check.push(i - 6);
         }
         if (col != 0 && row != 4) {
-            ;
             check.push(i + 4);
         }
         if (col != 4 && row != 0) {
@@ -351,16 +350,16 @@ export class Room {
         if (col != 4 && row != 4) {
             check.push(i + 6);
         }
-
+        console.log("main card " + this.maincard.toString());
+        console.log("main id   " + this.mainid.toString());
         for (let j = 0; j < check.length; j++) {
-            if (this.bobai[check[j]] == data.index) {
-                // for (let i = 0; i < this.maincard.length; i++) {
-                //     if (this.maincard[i] == this.bobai[check[j]] && this.mainid[i] == data.id) {
-                //         console.log("ban trung roi" + data.id);
-                //         break;
-                //     }
-                // }
-                console.log("ban trung roi" + data.id);
+            if (this.bobai[check[j]] == data.value) {
+                for (let i = 0; i < this.maincard.length; i++) {
+                    if (this.maincard[i] == this.bobai[check[j]] && this.mainid[i] == data.id) {
+                        console.log("ban trung roi" + data.id);
+                        break;
+                    }
+                }
             }
         }
 
@@ -371,6 +370,8 @@ export class Room {
             this.users[i].isPlaying = false;
             this.users[i].idroom = null;
             this.users.splice(i, 1);
+            this.mainid.splice(i, 1);
+            this.maincard.splice(i, 1);
             this.checkInfo();
             if (this.users.length < 2) {
                 this.isPlaying = false;
