@@ -28,7 +28,6 @@ class Login extends PIXI.Container {
                 this.player.username = txtUsername.getText();
                 txtUsername.setText("");
                 txtPassword.setText("");
-                this.player.emit("get room list");
             };
             txtUsername.onClick = () => {
                 txtUsername.setText("");

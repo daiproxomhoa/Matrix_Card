@@ -14,8 +14,14 @@ class BoardGame extends Container {
     constructor(data) {
         super();
         this.atk = false;
+        this.dec = false;
+        this.count1 = 0;
+        this.count2 = 0;
+        this.count3 = 0;
         this.createCardBoard = () => {
             this.board_game.removeChildren();
+            this.ui_context.removeChildren();
+            this.target_context.removeChildren();
             for (let i = 0; i < 25; i++) {
                 let card = new Card_1.Card();
                 if (Math.floor(i / 5) == 0)
@@ -43,7 +49,7 @@ class BoardGame extends Container {
                 this.board_game.addChild(card);
                 card.on('pointerdown', (event) => {
                     this.data = event.data;
-                    if (this.atk == false) {
+                    if (this.atk == false && this.dec == false) {
                         card.alpha = 0.7;
                         card.setStroke = 0;
                         this.board_game.setChildIndex(this.cards[card.index], this.board_game.children.length - 1);
@@ -52,7 +58,7 @@ class BoardGame extends Container {
                     .on('pointerup', () => {
                     if (this.data == null)
                         return;
-                    if (this.atk == false) {
+                    if (this.atk == false && this.dec == false) {
                         card.setStroke = 1;
                         this.index_card = card;
                         if (!util_1.isNullOrUndefined(this.last) && this.last.index != card.index) {
@@ -61,9 +67,17 @@ class BoardGame extends Container {
                         this.last = card;
                         card.alpha = 1;
                     }
-                    else {
+                    else if (this.atk == true && this.dec == false) {
                         card.setStrokeRed = 1;
                         this.index_attack = card;
+                        if (!util_1.isNullOrUndefined(this.privious) && this.privious.index != card.index) {
+                            this.privious.setStrokeGreen = 1;
+                        }
+                        this.privious = card;
+                    }
+                    else if (this.dec == true && this.atk == false) {
+                        card.setStrokeBlue = 1;
+                        this.index_dec = card;
                         if (!util_1.isNullOrUndefined(this.privious) && this.privious.index != card.index) {
                             this.privious.setStrokeGreen = 1;
                         }
@@ -72,14 +86,21 @@ class BoardGame extends Container {
                     this.data = null;
                 })
                     .on('pointerout', () => {
-                    if (this.data == null)
-                        return;
-                    if (this.atk == false) {
-                        card.setStroke = 0;
-                        card.alpha = 1;
-                        this.index_card = null;
+                    // if (this.atk == true &&this.dec==false) {
+                    //     card.setStrokeGreen = 0;
+                    //     card.alpha = 1;
+                    //     this.index_card = null;
+                    // }
+                    if (this.dec == true && this.atk == false) {
+                        this.Detec(card.index, 0);
                     }
-                    this.data = null;
+                    // if (this.data == null)
+                    //     return;
+                    // this.data = null;
+                }).on('pointerover', () => {
+                    if (this.dec == true && this.atk == false) {
+                        this.Detec(card.index, 1);
+                    }
                 });
             }
         };
@@ -88,31 +109,28 @@ class BoardGame extends Container {
             let size = new PIXI.Point(120, 40);
             this.btn_move.setSize(size);
             let i = 0;
-            let count1 = 0;
-            let count2 = 0;
-            let count3 = 0;
             this.btn_move.onClick = () => {
                 if (!util_1.isNullOrUndefined(this.index_card) && i != this.index_card.index) {
                     this.arrow.setPos(this.index_card.index);
                     i = this.index_card.index;
-                    count1++;
+                    this.count1++;
                     this.btn_atk.interactive = false;
                     this.btn_dec.interactive = false;
                     this.btn_atk.alpha = 0.7;
                     this.btn_dec.alpha = 0.7;
                 }
-                else if (!util_1.isNullOrUndefined(this.index_card) && i == this.index_card.index && count1 == 1) {
+                else if (!util_1.isNullOrUndefined(this.index_card) && i == this.index_card.index && this.count1 == 1) {
                     this.arrow.setClose();
-                    count1 = 0;
+                    this.count1 = 0;
                     this.btn_atk.interactive = true;
                     this.btn_dec.interactive = true;
                     this.btn_atk.alpha = 1;
                     this.btn_dec.alpha = 1;
                 }
-                else if (!util_1.isNullOrUndefined(this.index_card) && i == this.index_card.index && count1 == 0) {
+                else if (!util_1.isNullOrUndefined(this.index_card) && i == this.index_card.index && this.count1 == 0) {
                     this.arrow.setPos(this.index_card.index);
                     i = this.index_card.index;
-                    count1++;
+                    this.count1++;
                     this.btn_atk.interactive = false;
                     this.btn_dec.interactive = false;
                     this.btn_atk.alpha = 0.7;
@@ -120,7 +138,7 @@ class BoardGame extends Container {
                 }
                 else {
                     this.arrow.setClose();
-                    count1 = 0;
+                    this.count1 = 0;
                     this.btn_atk.interactive = true;
                     this.btn_dec.interactive = true;
                     this.btn_atk.alpha = 1;
@@ -133,14 +151,15 @@ class BoardGame extends Container {
             this.btn_atk.onClick = () => {
                 if (!util_1.isNullOrUndefined(this.main_card)) {
                     this.arrow.setClose();
-                    if (!util_1.isNullOrUndefined(this.main_card) && count2 == 0) {
+                    if (!util_1.isNullOrUndefined(this.main_card) && this.count2 == 0) {
+                        this.atk = true;
                         this.btn_move.interactive = false;
                         this.btn_dec.interactive = false;
                         this.btn_move.alpha = 0.7;
                         this.btn_dec.alpha = 0.7;
                         this.target_context.visible = true;
-                        this.Attack(true);
-                        count2++;
+                        this.Attack(true, 1);
+                        this.count2++;
                     }
                     else {
                         this.index_attack = null;
@@ -153,52 +172,83 @@ class BoardGame extends Container {
                         this.btn_move.alpha = 1;
                         this.btn_dec.alpha = 1;
                         this.target_context.visible = false;
-                        this.Attack(false);
+                        this.Attack(false, 0);
                         this.privious = null;
-                        count2 = 0;
+                        this.index_attack = null;
+                        this.index_dec = null;
+                        this.count2 = 0;
+                        this.clearStroke();
                     }
                 }
-                this.ui_context.visible = true;
+            };
+            this.btn_ok = new Button_1.Button(1130, 355, "OK");
+            this.btn_ok.setSize(size);
+            this.btn_ok.visible = false;
+            this.btn_ok.onClick = () => {
+                if (!util_1.isNullOrUndefined(this.index_dec)) {
+                    for (let i = 0; i < this.cards.length; i++) {
+                        this.cards[i].interactive = true;
+                        this.cards[i].setStroke = 0;
+                    }
+                    this.player.emit("detection", {
+                        index_main: this.main_card.index,
+                        value_main: this.main_card.value,
+                        index_dec: this.index_dec.index,
+                        value_dec: this.index_dec.value
+                    });
+                    this.btn_move.interactive = true;
+                    this.btn_atk.interactive = true;
+                    this.btn_move.alpha = 1;
+                    this.btn_atk.alpha = 1;
+                    this.btn_ok.visible = false;
+                    this.dec = false;
+                    this.privious = null;
+                    this.index_attack = null;
+                    this.index_dec = null;
+                    this.count3 = 0;
+                    this.clearStroke();
+                }
             };
             this.btn_dec = new Button_1.Button(1130, 310, "Detection");
             this.btn_dec.setSize(size);
             this.btn_dec.onClick = () => {
-                if (!util_1.isNullOrUndefined(this.index_card) && count3 == 0) {
-                    this.Attack(true);
-                    count3++;
-                }
-                else {
-                    for (let i = 0; i < this.cards.length; i++) {
-                        this.cards[i].interactive = true;
+                if (!util_1.isNullOrUndefined(this.main_card)) {
+                    this.arrow.setClose();
+                    if (!util_1.isNullOrUndefined(this.main_card) && this.count3 == 0) {
+                        this.btn_move.interactive = false;
+                        this.btn_atk.interactive = false;
+                        this.btn_move.alpha = 0.7;
+                        this.btn_atk.alpha = 0.7;
+                        this.btn_ok.visible = true;
+                        this.dec = true;
+                        this.Attack(true, 1);
+                        this.count3++;
                     }
-                    count3 = 0;
+                    else {
+                        this.index_dec = null;
+                        for (let i = 0; i < this.cards.length; i++) {
+                            this.cards[i].interactive = true;
+                        }
+                        this.btn_move.interactive = true;
+                        this.btn_atk.interactive = true;
+                        this.btn_move.alpha = 1;
+                        this.btn_atk.alpha = 1;
+                        this.btn_ok.visible = false;
+                        this.Attack(false, 0);
+                        this.privious = null;
+                        this.index_attack = null;
+                        this.dec = false;
+                        this.count3 = 0;
+                        this.clearStroke();
+                    }
                 }
-                this.ui_context.visible = true;
+                // this.arrow.setClose();
+                // if (!isNullOrUndefined(this.main_card)) {
+                //
+                //     this.player.emit("detection", {index: this.main_card.index, value: this.main_card.value});
+                // }
             };
-            // target = new Button(1000, 355, "Go");
-            // target.setSize(size);
-            // target.interactive = false;
-            // target.alpha = 0;
-            // target.onClick = () => {
-            //     if (!isNullOrUndefined(this.index_attack)) {
-            //         for (let i = 0; i < this.cards.length; i++) {
-            //             this.cards[i].interactive = true;
-            //             this.cards[i].setStroke = 0;
-            //             // this.player.emit("attack",this.index_attack.index);
-            //         }
-            //         console.log("attack : " + this.index_attack.str);
-            //         this.btn_move.interactive = true;
-            //         this.btn_dec.interactive = true;
-            //         this.btn_move.alpha = 1;
-            //         this.btn_dec.alpha = 1;
-            //         target.interactive = false;
-            //         target.alpha = 0;
-            //         this.atk = false;
-            //         this.privious = null;
-            //         this.index_attack = null;
-            //     }
-            // }
-            this.ui_context.addChild(this.btn_move, this.btn_atk, this.btn_dec);
+            this.ui_context.addChild(this.btn_move, this.btn_atk, this.btn_dec, this.btn_ok);
         };
         this.onTarget = (data) => {
             this.target_context.removeChildren();
@@ -213,8 +263,13 @@ class BoardGame extends Container {
                                 this.cards[i].interactive = true;
                                 this.cards[i].setStroke = 0;
                             }
-                            this.player.emit("attack", { id: data[i].id, index: this.main_card.index, value: this.index_attack.value });
-                            console.log("attack : " + this.index_attack.str);
+                            this.player.emit("attack", {
+                                id: data[i].id,
+                                index_main: this.main_card.index,
+                                value_main: this.main_card.value,
+                                index_atk: this.index_attack.index,
+                                value_atk: this.index_attack.value
+                            });
                             this.btn_move.interactive = true;
                             this.btn_dec.interactive = true;
                             this.btn_move.alpha = 1;
@@ -223,20 +278,15 @@ class BoardGame extends Container {
                             this.atk = false;
                             this.privious = null;
                             this.index_attack = null;
+                            this.count2 = 0;
+                            this.clearStroke();
                         }
                     };
                     this.target_context.addChild(target);
                 }
             }
         };
-        this.Attack = (val) => {
-            let value;
-            if (val == true) {
-                value = 1;
-            }
-            else {
-                value = 0;
-            }
+        this.Attack = (bool, value) => {
             let row = Math.floor(this.main_card.index / 5);
             let col = this.main_card.index % 5;
             let i = this.main_card.index;
@@ -251,7 +301,6 @@ class BoardGame extends Container {
                 check.push(i - 5);
             }
             if (row != 4) {
-                this.cards[i + 5].setStrokeGreen = value;
                 check.push(i + 5);
             }
             if (col != 0 && row != 0) {
@@ -269,14 +318,48 @@ class BoardGame extends Container {
             for (let j = 0; j < check.length; j++) {
                 this.cards[check[j]].setStrokeGreen = value;
             }
-            if (val == true) {
+            if (bool == true) {
                 for (let i = 0; i < this.cards.length; i++) {
                     this.cards[i].interactive = false;
                 }
                 for (let j = 0; j < check.length; j++) {
                     this.cards[check[j]].interactive = true;
                 }
-                this.atk = true;
+            }
+        };
+        this.Detec = (index, value) => {
+            let row = Math.floor(index / 5);
+            let col = index % 5;
+            let i = index;
+            let check = [];
+            if (col != 0) {
+                check.push(i - 1);
+            }
+            if (col != 4) {
+                check.push(i + 1);
+            }
+            if (row != 0) {
+                check.push(i - 5);
+            }
+            if (row != 4) {
+                check.push(i + 5);
+            }
+            if (col != 0 && row != 0) {
+                check.push(i - 6);
+            }
+            if (col != 0 && row != 4) {
+                check.push(i + 4);
+            }
+            if (col != 4 && row != 0) {
+                check.push(i - 4);
+            }
+            if (col != 4 && row != 4) {
+                check.push(i + 6);
+            }
+            for (let j = 0; j < check.length; j++) {
+                if (this.main_card.index != this.cards[check[j]].index) {
+                    this.cards[check[j]].strokered.alpha = value;
+                }
             }
         };
         this.moveUp = (data) => {
@@ -301,8 +384,7 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            this.showCard();
-            setTimeout(this.resetPos, 2000);
+            setTimeout(this.resetPos, 2500);
         };
         this.moveDown = (data) => {
             let row = Math.floor(data / 5);
@@ -331,8 +413,7 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            this.showCard();
-            setTimeout(this.resetPos, 2000);
+            setTimeout(this.resetPos, 2500);
         };
         this.moveRight = (data) => {
             let row = Math.floor(data / 5);
@@ -362,7 +443,7 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            setTimeout(this.resetPos, 2000);
+            setTimeout(this.resetPos, 2500);
         };
         this.moveLeft = (data) => {
             let row = Math.floor(data / 5);
@@ -387,8 +468,7 @@ class BoardGame extends Container {
             this.btn_dec.interactive = true;
             this.btn_atk.alpha = 1;
             this.btn_dec.alpha = 1;
-            this.showCard();
-            setTimeout(this.resetPos, 2000);
+            setTimeout(this.resetPos, 2500);
         };
         this.setMainCard = (data) => {
             for (let i = 0; i < this.cards.length; i++) {
@@ -421,12 +501,17 @@ class BoardGame extends Container {
             this.ui_context.alpha = 1;
             this.target_context.visible = false;
         };
+        this.clearStroke = () => {
+            for (let i = 0; i < this.cards.length; i++) {
+                this.cards[i].setStroke = 0;
+            }
+        };
         this.showCard = () => {
             let x = "";
             for (let i = 0; i < this.cards.length; i++) {
                 x += " " + this.cards[i].value;
             }
-            console.log(x);
+            // console.log(x);
         };
         this.cards = [];
         this.player = data;
@@ -442,15 +527,19 @@ class BoardGame extends Container {
         this.createCardBoard();
         this.on("move_left", () => {
             this.player.emit("move_left", this.index_card.index);
+            this.count1 = 0;
         });
         this.on("move_right", () => {
             this.player.emit("move_right", this.index_card.index);
+            this.count1 = 0;
         });
         this.on("move_up", () => {
             this.player.emit("move_up", this.index_card.index);
+            this.count1 = 0;
         });
         this.on("move_down", () => {
             this.player.emit("move_down", this.index_card.index);
+            this.count1 = 0;
         });
         this.interactiveChildren = false;
     }

@@ -5,19 +5,22 @@ class Room {
         this.users = [];
         this.ready = [];
         this.bobai = [];
+        this.restart = [];
+        this.asking = false;
         this.score = [0, 0, 0, 0];
         this.maincard = [];
         this.mainid = [];
         this.turn = 0;
         this.isPlaying = false;
         this.addUser = (user) => {
+            user.ready = false;
             if (this.users.length == 4)
                 return false;
             this.users.push(user);
             user.idroom = this.id;
             user.isPlaying = true;
             user.socket.emit("join room success");
-            this.checkInfo();
+            this.setInfo();
             if (this.users.length == 1) {
                 this.key = user.id;
                 user.emit("keyroom", true);
@@ -26,29 +29,46 @@ class Room {
                 user.emit("keyroom", false);
             }
             user.on("ready", () => {
+                user.ready = true;
+                console.log(user.username, user.ready);
                 if (this.key == user.id) {
-                    this.ready.push(1);
-                    if (this.ready.length == this.users.length && this.users.length > 1) {
+                    if (this.countReady() == this.users.length && this.users.length > 1) {
                         this.startgame();
                     }
                     else {
-                        this.ready.pop();
+                        user.ready = false;
                         user.emit("player is not ready");
                     }
                 }
                 else {
-                    this.ready.push(1);
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("ready_status", user.id);
+                    }
                 }
             });
             user.on("unready", () => {
-                if (this.ready.length > 0)
-                    this.ready.pop();
+                user.ready = false;
+                console.log("Du ma" + user.username, user.ready);
+                for (let j = 0; j < this.users.length; j++) {
+                    this.users[j].emit("unready_status", user.id);
+                }
             });
             user.on("disconnect", () => {
                 let index = this.users.findIndex((element) => {
                     return element == user;
                 });
                 this.onUserLeft(index);
+                for (let j = 0; j < this.users.length; j++) {
+                    this.users[j].emit("reset_turn", j.toString());
+                }
+                if (index == this.turn) {
+                    if (index == this.users.length) {
+                        this.turn = 0;
+                        for (let j = 0; j < this.users.length; j++) {
+                            this.users[j].emit("your_turn", this.turn);
+                        }
+                    }
+                }
             }, false);
             user.on("left_room", () => {
                 let index = this.users.findIndex((element) => {
@@ -56,37 +76,78 @@ class Room {
                 });
                 this.onUserLeft(index);
                 user.emit("left_room_ok");
-                console.log();
+                for (let j = 0; j < this.users.length; j++) {
+                    this.users[j].emit("reset_turn", j.toString());
+                }
+                // console.log(index + "  " + this.users.length);
                 if (index == this.turn) {
                     if (index == this.users.length) {
                         this.turn = 0;
-                        for (let j = 0; j < this.users.length; j++) {
-                            this.users[j].emit("reset_turn", j.toString());
-                            this.users[j].emit("your_turn", this.turn);
-                        }
+                    }
+                    for (let j = 0; j < this.users.length; j++) {
+                        this.users[j].emit("your_turn", this.turn);
                     }
                 }
             });
             user.on("send message", (msg) => {
-                console.log(this.users.length);
                 for (let j = 0; j < this.users.length; j++) {
                     this.users[j].emit("new message", { playername: user.getUserName, message: msg });
                 }
             });
-            // this.create_Card();
-            // user.emit("start", {bobai: this.bobai, maincard: this.maincard.pop()});
-            // console.log(this.maincard);
+            user.on("want reset game", () => {
+                if (this.asking == false) {
+                    if (this.isPlaying == false) {
+                        user.emit("game not start");
+                    }
+                    else {
+                        this.restart.push(1);
+                        this.asking = true;
+                        for (let j = 0; j < this.users.length; j++) {
+                            if (user.id != this.users[j].id)
+                                this.users[j].emit("do you want to restart");
+                        }
+                    }
+                }
+            });
         };
         this.startgame = () => {
             this.isPlaying = true;
             this.ready = [];
             this.sort();
+            this.setInfo();
             this.create_Card();
             for (let i = 0; i < this.users.length; i++) {
                 this.users[i].emit("ok_ready", i);
                 this.users[i].emit('set_turn', { turn: i.toString(), id: this.users[0].id });
                 this.users[i].emit('chia_bai', { bobai: this.bobai, maincard: this.maincard[i] });
                 this.users[i].emit('start_game');
+                this.users[i].on("ok_restart", (data) => {
+                    if (this.asking == true) {
+                        if (data == true) {
+                            this.restart.push(1);
+                            if (this.restart.length == this.users.length) {
+                                for (let a = 0; a < this.users.length; a++) {
+                                    this.users[a].emit("setScore", this.score);
+                                }
+                                for (let a = 0; a < this.users.length; a++) {
+                                    this.users[a].emit("reset_game", this.maincard);
+                                }
+                                this.setKey();
+                                this.isPlaying = false;
+                                this.turn = 0;
+                                this.score = [0, 0, 0, 0];
+                                this.asking = false;
+                                this.restart = [];
+                            }
+                        }
+                        else {
+                            for (let a = 0; a < this.users.length; a++) {
+                                if (a != i)
+                                    this.users[a].emit("not restart", this.maincard);
+                            }
+                        }
+                    }
+                });
                 this.users[i].on("move_left", (data) => {
                     if (this.turn >= this.users.length - 1) {
                         this.turn = 0;
@@ -156,18 +217,29 @@ class Room {
                     }
                 });
                 this.users[i].on("attack", (data) => {
-                    console.log("index " + data.index);
-                    console.log("value " + data.value);
-                    this.Attack(data);
+                    for (let i1 = 0; i1 < this.users.length; i1++) {
+                        this.users[i1].emit("Attack", { id: this.users[i].id, index_atk: data.index_atk });
+                    }
+                    this.Attack(data, i);
+                    if (this.isPlaying == true) {
+                        if (this.turn == this.users.length - 1) {
+                            this.turn = 0;
+                        }
+                        else {
+                            this.turn++;
+                        }
+                        for (let j = 0; j < this.users.length; j++) {
+                            this.users[j].emit("your_turn", this.turn.toString());
+                        }
+                    }
+                });
+                this.users[i].on("detection", (data) => {
+                    this.Detection(data, this.users[i].id);
                     if (this.turn == this.users.length - 1) {
                         this.turn = 0;
                     }
                     else {
                         this.turn++;
-                    }
-                    let index = 0;
-                    if (!isNaN(data)) {
-                        index = data;
                     }
                     for (let j = 0; j < this.users.length; j++) {
                         this.users[j].emit("your_turn", this.turn.toString());
@@ -201,7 +273,7 @@ class Room {
             }
             while (this.maincard.length < this.users.length) {
                 let i = Math.floor(Math.abs(Math.random() * 25));
-                if (this.isContant(this.bobai[i]) == false) {
+                if (this.isContant(this.bobai[i], this.maincard) == false) {
                     this.maincard.push(this.bobai[i]);
                 }
             }
@@ -218,16 +290,26 @@ class Room {
                     avatar: this.users[i].avatarID,
                     gold: this.users[i].gold,
                     sex: this.users[i].sex,
-                    key: this.key
+                    key: this.key,
+                    isReady: this.users[i].ready
                 });
             }
             return infoArr;
         };
-        this.checkInfo = () => {
+        this.setInfo = () => {
             for (let i = 0; i < this.users.length; i++) {
                 this.users[i].emit("info_players", this.getInfo());
             }
-            // console.log("dagui");
+        };
+        this.setKey = () => {
+            for (let i = 0; i < this.users.length; i++) {
+                if (this.users[i].id == this.key) {
+                    this.users[i].emit("keyroom", true);
+                }
+                else {
+                    this.users[i].emit("keyroom", false);
+                }
+            }
         };
         this.MoveUp = (data) => {
             let row = Math.floor(data / 5);
@@ -287,10 +369,11 @@ class Room {
             }
             this.bobai[length + 4 - col] = temp;
         };
-        this.Attack = (data) => {
-            let row = Math.floor(data.index / 5);
-            let col = data.index % 5;
-            let i = data.index;
+        this.Detection = (data, user) => {
+            // console.log("data" + data.index_dec);
+            let row = Math.floor(data.index_dec / 5);
+            let col = data.index_dec % 5;
+            let i = data.index_dec;
             let check = [];
             if (col != 0) {
                 check.push(i - 1);
@@ -316,14 +399,87 @@ class Room {
             if (col != 4 && row != 4) {
                 check.push(i + 6);
             }
-            console.log("main card " + this.maincard.toString());
-            console.log("main id   " + this.mainid.toString());
-            for (let j = 0; j < check.length; j++) {
-                if (this.bobai[check[j]] == data.value) {
-                    for (let i = 0; i < this.maincard.length; i++) {
-                        if (this.maincard[i] == this.bobai[check[j]] && this.mainid[i] == data.id) {
-                            console.log("ban trung roi" + data.id);
-                            break;
+            let check2 = [0, 0, 0, 0];
+            if (this.bobai[data.index_main] == data.value_main && this.bobai[data.index_dec] == data.value_dec) {
+                for (let i = 0; i < check.length; i++) {
+                    if (this.isContant(this.bobai[check[i]], this.maincard) == true) {
+                        let index = this.maincard.findIndex((element) => {
+                            return element == this.bobai[check[i]];
+                        });
+                        check2[index] = this.mainid[index];
+                    }
+                }
+            }
+            for (let j = 0; j < this.users.length; j++) {
+                this.users[j].emit("detection", { arr: check2, id: user, index_dec: data.index_dec });
+            }
+        };
+        this.Attack = (data, user) => {
+            let row = Math.floor(data.index_main / 5);
+            let col = data.index_main % 5;
+            let i = data.index_main;
+            let check = [];
+            if (col != 0) {
+                check.push(i - 1);
+            }
+            if (col != 4) {
+                check.push(i + 1);
+            }
+            if (row != 0) {
+                check.push(i - 5);
+            }
+            if (row != 4) {
+                check.push(i + 5);
+            }
+            if (col != 0 && row != 0) {
+                check.push(i - 6);
+            }
+            if (col != 0 && row != 4) {
+                check.push(i + 4);
+            }
+            if (col != 4 && row != 0) {
+                check.push(i - 4);
+            }
+            if (col != 4 && row != 4) {
+                check.push(i + 6);
+            }
+            if (this.bobai[data.index_main] == data.value_main) {
+                for (let j = 0; j < check.length; j++) {
+                    if (this.bobai[check[j]] == data.value_atk && check[j] == data.index_atk) {
+                        for (let i = 0; i < this.maincard.length; i++) {
+                            if (this.maincard[i] == this.bobai[check[j]] && this.mainid[i] == data.id) {
+                                this.score[user]++;
+                                for (let y = 0; y < this.users.length; y++) {
+                                    this.users[y].emit("Die", { id: this.users[i].id, value: this.maincard[i] });
+                                }
+                                if (this.score[user] < 2) {
+                                    let check = true;
+                                    while (check) {
+                                        let rd = Math.floor(Math.abs(Math.random() * 25));
+                                        if (this.isContant(this.bobai[rd], this.maincard) == false) {
+                                            this.maincard[i] = this.bobai[rd];
+                                            check = false;
+                                        }
+                                    }
+                                    this.users[i].emit("new_maincard", this.maincard[i]);
+                                    for (let a = 0; a < this.users.length; a++) {
+                                        this.users[a].emit("setScore", this.score);
+                                    }
+                                }
+                                else {
+                                    for (let a = 0; a < this.users.length; a++) {
+                                        this.users[a].emit("setScore", this.score);
+                                    }
+                                    for (let a = 0; a < this.users.length; a++) {
+                                        this.users[a].emit("reset_game", this.maincard);
+                                    }
+                                    this.setKey();
+                                    this.isPlaying = false;
+                                    this.turn = 0;
+                                    this.score = [0, 0, 0, 0];
+                                }
+                                return;
+                            }
                         }
                     }
                 }
@@ -331,15 +487,29 @@ class Room {
         };
         this.onUserLeft = (i) => {
             if (i >= 0) {
-                this.ready = [];
+                if (this.users[i].id == this.key) {
+                    if (i == this.users.length - 1) {
+                        this.key = this.users[0].id;
+                    }
+                    else {
+                        this.key = this.users[i + 1].id;
+                    }
+                }
                 this.users[i].isPlaying = false;
                 this.users[i].idroom = null;
+                this.users[i].ready = false;
                 this.users.splice(i, 1);
                 this.mainid.splice(i, 1);
                 this.maincard.splice(i, 1);
-                this.checkInfo();
-                if (this.users.length < 2) {
+                this.score.splice(i, 1);
+                this.setInfo();
+                if (this.users.length == 1) {
+                    this.users[0].emit("reset_game", this.maincard);
+                    this.users[0].ready = false;
+                    this.setKey();
                     this.isPlaying = false;
+                    this.turn = 0;
+                    this.score = [0, 0, 0, 0];
                 }
             }
         };
@@ -349,14 +519,21 @@ class Room {
             }
             return false;
         };
+        this.countReady = () => {
+            let count = 0;
+            for (let i = 0; i < this.users.length; i++) {
+                if (this.users[i].ready == false)
+                    count++;
+            }
+            return count;
+        };
         this.id = id;
         this.name = name;
         this.users = [];
-        this.ready = [];
     }
-    isContant(value) {
-        for (let i = 0; i < this.maincard.length; i++) {
-            if (this.maincard[i] == value) {
+    isContant(value, data) {
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] == value) {
                 return true;
             }
         }

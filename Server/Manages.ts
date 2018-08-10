@@ -35,6 +35,10 @@ export class Manages {
         user.on("getInfo", () => {
             user.emit("setInfo", {id:user._id,name: user.username, avatar: user.avatarID, sex: user.sex,gold:user.gold});
         })
+        user.on("left_room2",()=>{
+            user.emit("room list", this.getRoomList());
+            user.socket.broadcast.emit("room list", this.getRoomList());
+        });
         user.on("join room", (roomID) => {
             let findRoom = false;
             for (let i = 0; i < this.rooms.length; i++) {
@@ -49,6 +53,8 @@ export class Manages {
                 }
             }
             if (!findRoom) user.emit("cannot find room");
+            user.emit("room list", this.getRoomList());
+            user.socket.broadcast.emit("room list", this.getRoomList());
         });
         user.on("disconnect", () => {
             user.isPlaying = null;
@@ -61,7 +67,7 @@ export class Manages {
         }, false);
         user.on("invited", (data: any) => {
             for (let i = 0; i < this.users.length; i++) {
-                if (this.users[i].username == data.guest) {
+                if (this.users[i].id == data.id) {
                     console.log("Moi ");
                     this.users[i].emit("enjoy", {key: data.key, id: user.idroom});
                     break;
@@ -84,7 +90,7 @@ export class Manages {
         let invite = [];
         for (let i = 0; i < this.users.length; i++) {
             if (this.users[i].isPlaying == false)
-                invite.push({name: this.users[i].username});
+                invite.push({id:this.users[i].id,name: this.users[i].username});
         }
         return invite;
     }

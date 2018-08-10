@@ -1,7 +1,6 @@
 import "pixi.js"
 import {App} from "../Const/App";
 import Sprite = PIXI.Sprite;
-import {BoardGame} from "./BoardGame";
 import {Player} from "../Player";
 import {Sound} from "../Const/Sound";
 import {Login} from "./LoginView";
@@ -15,8 +14,10 @@ import {isNullOrUndefined} from "util";
 /**
  * Created by Vu Tien Dai on 21/11/2017.
  */
+
+var count = 0;
+var screenfull = require('screenfull');
 export class viewGame {
-    app;
     player: Player;
     static sound: Sound = new Sound();
     static login_broad: Login;
@@ -24,33 +25,95 @@ export class viewGame {
     static Invite: Invite;
     static Hall: Hall;
     static Game: Game;
+    static app;
 
     constructor() {
         this.player = new Player();
-        this.app = new PIXI.Application(App.W, App.H, {backgroundColor: 0xffffff});
-        document.body.appendChild(this.app.view);
+        if (!App.IsWeb) {
+            this.ReSize();
+            viewGame.app = new PIXI.Application(App.W, App.H);
+            viewGame.app.stage.scale.set(App.W / App.width, App.H / App.height);
+        }
 
-        // card.scale.set(0.8);
-        // let board = new  boardchess();
-        // board.position.set(50,50)
-        // this.app.stage.addChild(board);
+        else {
+            viewGame.app = new PIXI.Application(960, 620);
+            // viewGame.app.stage.scale.set(960/App.W,620/App.H)
+            var docelem = document.documentElement;
+            if (docelem.requestFullscreen) {
+                docelem.requestFullscreen();
+            }
+            else if (docelem.webkitRequestFullscreen) {
+                docelem.webkitRequestFullscreen();
+            }
+            setTimeout(() => {
+                viewGame.app.renderer.resize(window.innerWidth, window.innerHeight)
+                viewGame.app.stage.scale.set(window.innerWidth / App.W, window.innerHeight / App.H)
+                document.body.style.overflowY = "auto"
+                document.body.style.overflowX = "hidden"
+            }, 200);
+            window.addEventListener("resize", this.function);
+        }
+        document.body.appendChild(viewGame.app.view);
+        // window.addEventListener("resize", function() {
+        //     viewGame.app.renderer.resize(window.innerWidth, window.innerHeight);
+        //     viewGame.app.stage.scale.set(window.innerWidth/App.W,window.innerHeight/App.H)
+        // });
+        // document.addEventListener("keydown", keyDownTextField, false);
+        // function keyDownTextField(e) {
+        //     var keyCode = e.keyCode;
         //
-        // let backgroud = PIXI.Sprite.fromImage(App.AssetDir + 'Picture/background.jpg');
-        // backgroud.width = App.width
-        // backgroud.height = App.height;
-        // this.app.stage.addChild(backgroud,card);
-        this.app.stage.addChild(Panel.panel);
+        //     if(keyCode==122&& count ==0) {
+        //         viewGame.app.renderer.resize(window.screen.width, window.screen.height);
+        //         viewGame.app.stage.scale.set(window.screen.width/App.W,window.screen.height/App.H)
+        //         count++
+        //     } else if(keyCode==122&& count ==1) {
+        //         viewGame.app.renderer.resize(960,620);
+        //         viewGame.app.stage.scale.set(960/App.W,620/App.H)
+        //         count =0;
+        //     }
+        // }
+
+        document.body.appendChild(viewGame.app.view);
+        viewGame.app.stage.addChild(Panel.panel);
         viewGame.Game = new Game();
-        this.app.stage.addChild(viewGame.Game);
+        viewGame.app.stage.addChild(viewGame.Game);
         this.createLogin();
         this.eventPlayer();
         viewGame.Setting = new Setting();
-        this.app.stage.addChild(viewGame.Setting);
+        viewGame.app.stage.addChild(viewGame.Setting);
+        document.getElementById('canvas').addEventListener('pointerup',()=>{   window.scroll({
+            top: 0,
+            left: 0,
+            behavior: 'smooth'
+        })
+
+        ;})
     }
 
+    function = () => {
+        viewGame.app.renderer.resize(window.innerWidth, window.innerHeight);
+        viewGame.app.stage.scale.set(window.innerWidth / App.W, window.innerHeight / App.H)
+    }
+    ReSize = () => {
+        if (!App.IsWeb || screenfull.isFullScreen) {
+            App.W = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+            App.H = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+            if (App.IsWeb) {
+                // let zoomBrowser = Math.round(window.devicePixelRatio * 100);
+                // if (zoomBrowser != 100) {
+                //     w = window.innerWidth;
+                //     h = window.innerHeight;
+                // } else {
+                //     w = window.screen.width;
+                //     h = window.screen.height;
+                // }
+            }
+        }
+
+    }
     createLogin = () => {
         viewGame.login_broad = new Login(this.player);
-        this.app.stage.addChild(viewGame.login_broad);
+        viewGame.app.stage.addChild(viewGame.login_broad);
     }
     eventPlayer = () => {
         this.player.on("OK", this.onOK);
@@ -58,11 +121,11 @@ export class viewGame {
     }
     onOK = () => {
         this.player.emit("getInfo");
-        this.app.stage.removeChild(viewGame.login_broad)
+        viewGame.app.stage.removeChild(viewGame.login_broad)
         this.createHall();
         this.eventHall();
         viewGame.Invite = new Invite(this.player);
-        this.app.stage.addChild(viewGame.Invite);
+        viewGame.app.stage.addChild(viewGame.Invite);
         viewGame.Hall.visible = true;
         this.player.emit("get room list");
         viewGame.sound.play_BG("Wait");
@@ -78,7 +141,7 @@ export class viewGame {
     createHall = () => {
         viewGame.Hall = new Hall(this.player);
         viewGame.Hall.visible = false;
-        this.app.stage.addChild(viewGame.Hall);
+        viewGame.app.stage.addChild(viewGame.Hall);
     }
     onSetInfo = (data: any) => {
         this.player.id = data.id;
@@ -87,7 +150,7 @@ export class viewGame {
         this.player.sex = data.sex;
         this.player.gold = data.gold;
         console.log(data);
-        viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username,this.player.id);
+        viewGame.Hall.avatar.show(this.player.gold, this.player.sex, this.player.avatar, this.player.username, this.player.id);
     }
     eventGame = () => {
         this.player.on("left_room_ok", () => {
@@ -115,6 +178,18 @@ export class viewGame {
         this.player.on("reset_turn", (data) => {
             viewGame.Game.emit("reset_turn", data)
         });
+        this.player.on("setScore", (data) => {
+            viewGame.Game.emit("setScore", data)
+        });
+        this.player.on("new_maincard", (data) => {
+            viewGame.Game.emit("new_maincard", data)
+        });
+        this.player.on("Attack", (data) => {
+            viewGame.Game.emit("Attack", data)
+        });
+        this.player.on("Die", (data) => {
+            viewGame.Game.emit("Die", data)
+        });
 
         this.player.on("on_left", (data) => {
             let index = 0;
@@ -122,7 +197,6 @@ export class viewGame {
                 index = data
             }
             viewGame.Game.boardGame.moveLeft(index);
-
         });
         this.player.on("on_right", (data) => {
             let index = 0;
@@ -132,7 +206,7 @@ export class viewGame {
             viewGame.Game.boardGame.moveRight(index);
 
         });
-        this.player.on("on_up",  (data) => {
+        this.player.on("on_up", (data) => {
             let index = 0;
             if (!isNullOrUndefined(data)) {
                 index = data
@@ -140,7 +214,7 @@ export class viewGame {
             viewGame.Game.boardGame.moveUp(index);
 
         });
-        this.player.on("on_down",  (data) => {
+        this.player.on("on_down", (data) => {
             let index = 0;
             if (!isNullOrUndefined(data)) {
                 index = data
@@ -158,6 +232,37 @@ export class viewGame {
         this.player.on("info_players", (data) => {
             viewGame.Game.emit("info_players", data)
         });
+        this.player.on("detection", (data) => {
+            viewGame.Game.emit("detection", data)
+        });
+        this.player.on("reset_game", (data) => {
+            viewGame.Game.emit("reset_game", data)
+        }); this.player.on("ready_status", (data) => {
+            viewGame.Game.emit("ready_status", data)
+        }); this.player.on("unready_status", (data) => {
+            viewGame.Game.emit("unready_status", data)
+        });
+        this.player.on("do you want to restart", (data) => {
+            Panel.showConfirmDialog("Đối phương muốn chơi lại",
+                {
+                    text: "Có",
+                    action: () => {
+                        this.player.emit("ok_restart", true);
+                    }
+                }, {
+                    text: "Không",
+                    action: () => {
+                        this.player.emit("ok_restart", false);
+                    }
+                });
+        });
+
+        this.player.on("game not start", (data) => {
+            Panel.showDialog("Game chưa bắt đầu !");
+        });
+        this.player.on("not restart", (data) => {
+            Panel.showDialog("Có người không thống nhất !");
+        });
 
     }
     eventHall = () => {
@@ -167,5 +272,24 @@ export class viewGame {
             this.createGame();
             this.eventGame();
         });
+        this.player.on("room list", viewGame.Hall.getRoomList);
+        this.player.on("room full", () => {
+            Panel.showMessageDialog("This room is full", () => {
+            }, false);
+        });
+        this.player.on("enjoy", this.onEnjoy);
     }
+    onEnjoy = (data: any) => {
+        Panel.showConfirmDialog("Người chơi " + data.key + " muốn bạn chơi cùng ? ", {
+            text: "Có",
+            action: () => {
+                this.player.emit("join room", data.id);
+            }
+        }, {
+            text: "Không",
+            action: () => {
+            }
+        })
+    }
+
 }

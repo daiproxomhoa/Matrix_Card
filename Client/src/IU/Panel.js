@@ -61,7 +61,7 @@ class Panel extends Sprite {
             text.anchor.set(0.5);
             text.y = -20;
             text.style = new PIXI.TextStyle({
-                fontFamily: 'Arial',
+                fontFamily: 'Times New Roman',
                 fontSize: 42,
                 fontWeight: 'bold',
                 fill: '#51301b',
@@ -121,7 +121,7 @@ Panel.showDialog = (message, duration) => {
         text.anchor.set(0.5);
         text.y = -20;
         text.style = new PIXI.TextStyle({
-            fontFamily: 'UTM French Vanilla',
+            fontFamily: 'Times New Roman',
             fontSize: 42,
             fontWeight: 'bold',
             fill: '#51301b',
@@ -158,7 +158,7 @@ Panel.showMessageDialog = (message, action, isgame) => {
     text.anchor.set(0.5);
     text.y = -20;
     text.style = new PIXI.TextStyle({
-        fontFamily: 'UTM French Vanilla',
+        fontFamily: 'Times New Roman',
         fontSize: 42,
         fontWeight: 'bold',
         fill: '#51301b',

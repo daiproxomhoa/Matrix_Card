@@ -36,7 +36,7 @@ export class Button extends PIXI.Sprite {
         if (App.IsWeb) {
             this.text = new PIXI.Text(text);
             this.text.style = new PIXI.TextStyle({
-                fontFamily: 'UTM French Vanilla',
+                fontFamily: 'Times New Roman',
                 fontSize: 24,
                 fontWeight: 'bold',
                 fill: '#51301b',
@@ -54,7 +54,7 @@ export class Button extends PIXI.Sprite {
             else  {
                 this.text = new PIXI.Text(text);
                 this.text.style = new PIXI.TextStyle({
-                    fontFamily: 'Arial',
+                    fontFamily: 'Times New Roman',
                     fontSize: 24,
                     fontWeight: 'bold',
                     fill: '#51301b',

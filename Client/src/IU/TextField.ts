@@ -10,16 +10,13 @@ import Rectangle = PIXI.Rectangle;
 import * as Input from "./TextInput";
 import {App} from "../Const/App";
 export class TextField extends PIXI.Container {
-
     displayName: PIXI.Text;
     private input;
     private style;
     _index;
 
     constructor(x: number, y: number, public size: number = 1, name?: string) {
-
         super();
-
         let base = PIXI.BaseTexture.fromImage(App.AssetDir + "Picture/IU/textfield.png");
         let left = new PIXI.Sprite(new PIXI.Texture(base, new Rectangle(0, 0, 50, 127)));
         left.anchor.set(0, 0.5);
@@ -71,28 +68,26 @@ export class TextField extends PIXI.Container {
         this.input.x = 20;
         this.input.y = -this.input.height / 2;
         this.addChild(this.input);
-        // this.on("pointerdown", () => {
-        //
+        // this.input.on("pointerdown", () => {
+        //     console.log("Dm")
         //     let item: any = document.getElementById("textbox");
         //     item.focus();
         //     item.value = this.input.text;
         //     item.addEventListener("keydown", (e) => {
         //         if (e.keyCode == 13) {
         //             item.blur();
-        //             document.getElementById("canvas").focus();
-        //             // document.getElementById("canvas").style.position="absolute"
-        //             this.pageScroll();
+        //             window.scroll({
+        //                 top: 0,
+        //                 left: 0,
+        //                 behavior: 'smooth'
+        //             });
         //         }
         //         this.setText(item.value)
         //     });
-        //
-        // });
+        // }
+        // );
     }
 
-    pageScroll = () => {
-        window.scrollBy(0, 1);
-        let scrolldelay = setTimeout(this.pageScroll, 10);
-    }
     focus = () => {
         this.input.focus();
     };
@@ -111,5 +106,13 @@ export class TextField extends PIXI.Container {
     };
     setText = (text: string) => {
         this.input.setText(text);
+    }
+    scaleSize(x,y){
+        this.width=this.width*x;
+        this.height=this.height*y;
+    }
+    setSize(x,y){
+        this.width=x;
+        this.height=y;
     }
 }

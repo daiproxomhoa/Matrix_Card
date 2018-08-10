@@ -14,10 +14,6 @@ class TextField extends PIXI.Container {
     constructor(x, y, size = 1, name) {
         super();
         this.size = size;
-        this.pageScroll = () => {
-            window.scrollBy(0, 1);
-            let scrolldelay = setTimeout(this.pageScroll, 10);
-        };
         this.focus = () => {
             this.input.focus();
         };
@@ -75,25 +71,35 @@ class TextField extends PIXI.Container {
         this.input.x = 20;
         this.input.y = -this.input.height / 2;
         this.addChild(this.input);
-        // this.on("pointerdown", () => {
-        //
+        // this.input.on("pointerdown", () => {
+        //     console.log("Dm")
         //     let item: any = document.getElementById("textbox");
         //     item.focus();
         //     item.value = this.input.text;
         //     item.addEventListener("keydown", (e) => {
         //         if (e.keyCode == 13) {
         //             item.blur();
-        //             document.getElementById("canvas").focus();
-        //             // document.getElementById("canvas").style.position="absolute"
-        //             this.pageScroll();
+        //             window.scroll({
+        //                 top: 0,
+        //                 left: 0,
+        //                 behavior: 'smooth'
+        //             });
         //         }
         //         this.setText(item.value)
         //     });
-        //
-        // });
+        // }
+        // );
     }
     set onEnterPress(fn) {
         this.input.onEnterPress = fn;
+    }
+    scaleSize(x, y) {
+        this.width = this.width * x;
+        this.height = this.height * y;
+    }
+    setSize(x, y) {
+        this.width = x;
+        this.height = y;
     }
 }
 exports.TextField = TextField;

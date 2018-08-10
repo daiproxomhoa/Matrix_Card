@@ -13,6 +13,7 @@ export class User {
     private _isPlaying = false;
     private _idroom: number;
     private _sex: boolean;
+    private _ready:boolean=false;
     socket: Socket;
 
     constructor(id: number, userInfo: string, gold: number, sex: boolean, avatar: number, socket: Socket) {
@@ -115,7 +116,13 @@ export class User {
     set isPlaying(value: boolean) {
         this._isPlaying = value;
     }
+    get ready(): boolean {
+        return this._ready;
+    }
 
+    set ready(value: boolean) {
+        this._ready = value;
+    }
 
 
     set idroom(value: number) {

@@ -5,7 +5,6 @@ const viewGame_1 = require("./viewGame");
 var Container = PIXI.Container;
 const App_1 = require("../Const/App");
 const Button_1 = require("../IU/Button");
-const Panel_1 = require("../IU/Panel");
 const Avatar_1 = require("../ObjectGame/Avatar");
 var TweenMax = gsap.TweenMax;
 /**
@@ -84,11 +83,7 @@ class Hall extends Container {
         };
         this.eventForPlayer = () => {
             this.player.socket.removeAllListeners();
-            this.player.emit("get room list");
             this.player.once("room list", this.getRoomList);
-            this.player.on("room full", () => {
-                Panel_1.Panel.showMessageDialog("This room is full", () => { }, false);
-            });
         };
         this.getRoomList = (rooms) => {
             this.first.removeChildren();
@@ -154,7 +149,7 @@ class BarItem extends Button_1.Button {
         this.id.anchor.set(0.5);
         this.id.y = -70;
         for (let i = 0; i < data.key.length; i++) {
-            let player = new PIXI.Text("~" + data.key[i], style);
+            let player = new PIXI.Text("" + data.key[i], style);
             player.anchor.set(0.5);
             player.y = -40 + i * 25;
             this.addChild(player);

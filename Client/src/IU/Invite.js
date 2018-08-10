@@ -18,22 +18,22 @@ class Invite extends Sprite {
                 let btn;
                 if (guest.length < 6) {
                     if (i % 2 == 0)
-                        btn = new Button_1.Button(-145, 110 * Math.floor(i / 2) - 75, guest[i].name, App_1.App.AssetDir + "Picture/IU/inviteArea.png");
+                        btn = new Button_1.Button(-145, 110 * Math.floor(i / 2) - 75, guest[i].name + "  ", App_1.App.AssetDir + "Picture/IU/inviteArea.png");
                     else
-                        btn = new Button_1.Button(145, 110 * Math.floor(i / 2) - 75, guest[i].name, App_1.App.AssetDir + "Picture/IU/inviteArea.png");
+                        btn = new Button_1.Button(145, 110 * Math.floor(i / 2) - 75, guest[i].name + "  ", App_1.App.AssetDir + "Picture/IU/inviteArea.png");
                     btn.setSize(new PIXI.Point(250, 80));
                 }
                 else {
                     if (i % 3 == 0)
-                        btn = new Button_1.Button(-195, 70 * Math.floor(i / 3) - 80, guest[i].name, App_1.App.AssetDir + "Picture/IU/inviteArea.png");
+                        btn = new Button_1.Button(-195, 70 * Math.floor(i / 3) - 80, guest[i].name + "  ", App_1.App.AssetDir + "Picture/IU/inviteArea.png");
                     else if (i % 3 == 1)
-                        btn = new Button_1.Button(0, 70 * Math.floor(i / 3) - 80, guest[i].name, App_1.App.AssetDir + "Picture/IU/inviteArea.png");
+                        btn = new Button_1.Button(0, 70 * Math.floor(i / 3) - 80, guest[i].name + "  ", App_1.App.AssetDir + "Picture/IU/inviteArea.png");
                     else
-                        btn = new Button_1.Button(195, 70 * Math.floor(i / 3) - 80, guest[i].name, App_1.App.AssetDir + "Picture/IU/inviteArea.png");
+                        btn = new Button_1.Button(195, 70 * Math.floor(i / 3) - 80, guest[i].name + "  ", App_1.App.AssetDir + "Picture/IU/inviteArea.png");
                     btn.setSize(new PIXI.Point(160, 60));
                 }
                 btn.onClick = () => {
-                    this.player.emit("invited", { key: this.player.username, guest: guest[i].name });
+                    this.player.emit("invited", { key: this.player.username, id: guest[i].id });
                     btn.alpha = 0.5;
                     btn.interactive = false;
                 };

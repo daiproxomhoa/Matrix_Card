@@ -121,12 +121,7 @@ export class Hall extends Container {
 
     eventForPlayer = () => {
         this.player.socket.removeAllListeners();
-        this.player.emit("get room list");
         this.player.once("room list", this.getRoomList);
-        this.player.on("room full", () => {
-            Panel.showMessageDialog("This room is full",() => { }, false);
-        });
-
 
     }
 
@@ -178,7 +173,7 @@ class BarItem extends Button {
         this.id.y = -70;
 
         for(let i=0;i<data.key.length;i++) {
-            let player = new PIXI.Text("~"+data.key[i], style)
+            let player = new PIXI.Text(""+data.key[i], style)
             player.anchor.set(0.5)
             player.y=-40+i*25;
             this.addChild(player);

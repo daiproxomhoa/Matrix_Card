@@ -41,14 +41,20 @@ export function PixiTextInput(text?, style?) {
     this.caretFlashInterval = null;
     this.blur();
     this.updateCaretPosition();
-
+    this.input = document.createElement("input");
+    document.body.appendChild(this.input);
+    this.input.style.opacity=0;
     this.backgroundGraphics.interactive = true;
     this.backgroundGraphics.buttonMode = true;
     this.backgroundGraphics.defaultCursor = "text";
-    if (App.IsWeb)
+    if (App.IsWeb){
         this.backgroundGraphics.mousedown = this.onBackgroundMouseDown.bind(this);
+        this.backgroundGraphics.pointerup = this.onBackgroundMouseDown.bind(this);
+    }
+
     else
         this.backgroundGraphics.pointerup = this.onBackgroundMouseDown.bind(this);
+
     this.keyEventClosure = this.onKeyEvent.bind(this);
     this.windowBlurClosure = this.onWindowBlur.bind(this);
     this.documentMouseDownClosure = this.onDocumentMouseDown.bind(this);
@@ -77,24 +83,33 @@ PixiTextInput.prototype.onBackgroundMouseDown = function (e) {
     let scope = this;
     setTimeout(function () {
         scope.isFocusClick = false;
+
+
     }, 0);
 
 }
 
 PixiTextInput.prototype.onBackgroundMouseUp = function () {
     this.blur();
-    let item: any = document.getElementById("textbox");
-    item.focus();
-    item.value = this.text;
-    item.addEventListener("keydown", (e) => {
+    this.input.focus();
+    this.input.value = this.text;
+    this.input.addEventListener("keyup", (e) => {
         if (e.keyCode == 13) {
-            item.blur();
-            document.getElementById("canvas").focus();
-            document.getElementById("canvas").style.position="absolute"
+            this.input.blur();
+                      window.scroll({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
 
         }
-        this.setText(item.value)
+        this.setText(this.input.value)
     });
+    this.input.addEventListener('blur',()=>{ window.scroll({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+    });})
 }
 PixiTextInput.prototype.focus = function () {
     this.blur();
@@ -104,8 +119,10 @@ PixiTextInput.prototype.focus = function () {
         document.addEventListener("mousedown", this.documentMouseDownClosure);
     else
         document.addEventListener("pointerup", this.documentMouseUpClosure);
+        document.addEventListener("pointerup", this.documentMouseUpClosure);
     window.addEventListener("blur", this.windowBlurClosure);
     this.showCaret();
+
 }
 
 PixiTextInput.prototype.onKeyEvent = function (e) {
@@ -206,12 +223,17 @@ PixiTextInput.prototype.ensureCaretInView = function () {
 PixiTextInput.prototype.blur = function () {
     document.removeEventListener("keydown", this.keyEventClosure);
     document.removeEventListener("keypress", this.keyEventClosure);
-    if (App.IsWeb)
+    if (App.IsWeb){
         document.removeEventListener("mousedown", this.documentMouseDownClosure);
+        document.removeEventListener("pointerup", this.documentMouseUpClosure);
+    }
+
     else
         document.removeEventListener("pointerup", this.documentMouseUpClosure);
+
     window.removeEventListener("blur", this.windowBlurClosure);
     this.hideCaret();
+
 }
 
 PixiTextInput.prototype.onDocumentMouseDown = function () {

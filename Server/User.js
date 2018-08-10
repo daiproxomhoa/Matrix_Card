@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class User {
     constructor(id, userInfo, gold, sex, avatar, socket) {
         this._isPlaying = false;
+        this._ready = false;
         this.on = (event, fn, clear = true) => {
             if (clear)
                 this.socket.removeAllListeners(event);
@@ -108,6 +109,12 @@ class User {
     }
     set isPlaying(value) {
         this._isPlaying = value;
+    }
+    get ready() {
+        return this._ready;
+    }
+    set ready(value) {
+        this._ready = value;
     }
     set idroom(value) {
         this._idroom = value;

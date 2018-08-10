@@ -48,7 +48,11 @@ class Arrow extends Container {
             this.visible = false;
         };
     }
-    setPos(value) {
+    setPos(val) {
+        let value = 0;
+        if (!isNaN(val)) {
+            value = val;
+        }
         this.visible = true;
         let row = Math.floor(value / 5);
         let col = value % 5;
